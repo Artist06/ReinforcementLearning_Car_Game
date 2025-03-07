@@ -8,10 +8,10 @@ WIDTH, HEIGHT = 800, 600
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("Track Invaders")
 
-icon = pygame.image.load('images/racing.png')
+icon = pygame.image.load('racing.png')
 pygame.display.set_icon(icon)
 
-playerImg = pygame.image.load('images/racing-car.png')
+playerImg = pygame.image.load('racing-car.png')
 new_width = 48
 new_height = int((new_width / playerImg.get_width()) * playerImg.get_height())
 playerImg = pygame.transform.scale(playerImg, (new_width, new_height))
