@@ -1,9 +1,32 @@
 import pygame
 import random
+import math
 
-TRACK_WIDTH = random.randint(80, 120) 
-TRACK_COLOR = (50, 50, 50)  
+TRACK_COLOR = (50, 50, 50)
+TRACK_WIDTH = random.randint(80, 120)
 
+def generate_oval(screen_width, screen_height, num_points=20):
+    """Generate an initial oval shape as the base of the track"""
+    cx, cy = screen_width // 2, screen_height // 2
+    a, b = screen_width // 3, screen_height // 4  # Oval radii
+
+    points = []
+    for i in range(num_points):
+        angle = (i / num_points) * 2 * math.pi
+        x = cx + a * math.cos(angle)
+        y = cy + b * math.sin(angle)
+        points.append((x, y))
+
+    return points
+
+def perturb_points(points, max_offset=40):
+    """Add randomness to the points to create a natural-looking track"""
+    perturbed = []
+    for x, y in points:
+        new_x = x + random.uniform(-max_offset, max_offset)
+        new_y = y + random.uniform(-max_offset, max_offset)
+        perturbed.append((new_x, new_y))
+    return perturbed
 
 def generate_bezier_curve(p0, p1, p2, num_points=30):
     """Generate points along a quadratic Bézier curve"""
@@ -15,28 +38,21 @@ def generate_bezier_curve(p0, p1, p2, num_points=30):
         curve.append((x, y))
     return curve
 
+def generate_track(screen_width, screen_height, num_curves=10):
+    """Create a track by perturbing an oval and smoothing it with Bézier curves"""
+    base_points = generate_oval(screen_width, screen_height, num_curves)
+    perturbed_points = perturb_points(base_points, max_offset=50)
 
-def generate_track(screen_width, screen_height, num_curves=7):
-    """Create a track that fits within the screen with uniform width"""
-    track_center = []  # Holds centerline of the track
+    track_center = []
+    for i in range(len(perturbed_points)):
+        p0 = perturbed_points[i]
+        p1 = perturbed_points[(i + 1) % len(perturbed_points)]  # Next point (looping)
+        p2 = perturbed_points[(i + 2) % len(perturbed_points)]  # Next-next point
 
-    # Start at bottom middle
-    start_x = screen_width // 2
-    start_y = screen_height + 50  
-    prev_point = (start_x, start_y)
-
-    for i in range(num_curves):
-        control_x = random.randint(screen_width // 4, 3 * screen_width // 4)  # Random midpoint
-        control_y = prev_point[1] - random.randint(80, 120)  # Move upwards
-        end_x = random.randint(screen_width // 4, 3 * screen_width // 4)
-        end_y = control_y - random.randint(100, 150)
-
-        curve = generate_bezier_curve(prev_point, (control_x, control_y), (end_x, end_y))
+        curve = generate_bezier_curve(p0, p1, p2)
         track_center.extend(curve)
-        prev_point = (end_x, end_y)
 
     return track_center
-
 
 def get_track_edges(centerline, track_width):
     """Generate left and right edges based on the centerline"""
@@ -60,7 +76,6 @@ def get_track_edges(centerline, track_width):
 
     return left_edge, right_edge
 
-
 def draw_track(screen, centerline, track_width):
     """Draw the track using the centerline and width"""
     left_edge, right_edge = get_track_edges(centerline, track_width)
@@ -68,5 +83,6 @@ def draw_track(screen, centerline, track_width):
     for i in range(len(left_edge) - 1):
         pygame.draw.polygon(screen, TRACK_COLOR, [left_edge[i], left_edge[i + 1], right_edge[i + 1], right_edge[i]])
 
-    pygame.draw.lines(screen, (255, 255, 255), False, left_edge, 3)  # Left boundary (White)
-    pygame.draw.lines(screen, (255, 255, 255), False, right_edge, 3)  # Right boundary (White)
+    pygame.draw.aalines(screen, (255, 255, 255), True, left_edge, 2)
+    pygame.draw.aalines(screen, (255, 255, 255), True, right_edge, 2)
+
