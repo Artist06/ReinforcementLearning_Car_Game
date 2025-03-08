@@ -1,17 +1,18 @@
 import pygame
 import math
-from track import generate_track, draw_track, TRACK_WIDTH
+from track import draw_track, TRACK_WIDTH, catmull_rom_chain, generate_track
 
 pygame.init()
 
+NUM_POINTS: int = 100  # Density of blue chain points between two red points
 WIDTH, HEIGHT = 800, 600
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("Track Invaders")
 
-icon = pygame.image.load('racing.png')
+icon = pygame.image.load('images/racing.png')
 pygame.display.set_icon(icon)
 
-playerImg = pygame.image.load('racing-car.png')
+playerImg = pygame.image.load('images/racing-car.png')
 new_width = 48
 new_height = int((new_width / playerImg.get_width()) * playerImg.get_height())
 playerImg = pygame.transform.scale(playerImg, (new_width, new_height))
@@ -20,13 +21,15 @@ steering_wheel_img = pygame.image.load('images/steering-wheel.png')
 steering_wheel_img = pygame.transform.scale(steering_wheel_img, (150, 150))
 
 pedal_size = (80, 80)
-accelerator_img = pygame.transform.scale(pygame.image.load('brake.png'), pedal_size)
-brake_img = pygame.transform.scale(pygame.image.load('accelerator.png'), pedal_size)
+accelerator_img = pygame.transform.scale(pygame.image.load('images/brake.png'), pedal_size)
+brake_img = pygame.transform.scale(pygame.image.load('images/accelerator.png'), pedal_size)
 
 accelerator_rect = accelerator_img.get_rect(bottomleft=(50, HEIGHT - 20))
 brake_rect = brake_img.get_rect(bottomleft=(150, HEIGHT - 20))
 
-track_points = generate_track(WIDTH, HEIGHT)
+track_points = [(400, 300), (200, 300), (240, 100), (600, 100), (600, 500), (240, 500), (400, 300), (200, 300), (240, 100)]
+curve_points=catmull_rom_chain(track_points, NUM_POINTS)
+outer_points, inner_points=generate_track(curve_points, TRACK_WIDTH)
 
 playerX, playerY = track_points[0]
 angle = math.degrees(math.atan2(track_points[1][1] - playerY, track_points[1][0] - playerX))
@@ -75,7 +78,7 @@ while running:
         if event.type == pygame.QUIT:
             running = False
 
-    draw_track(screen, track_points, TRACK_WIDTH)
+    draw_track(screen, outer_points, inner_points, curve_points, TRACK_WIDTH)
 
     keys = pygame.key.get_pressed()
     accelerating = keys[pygame.K_UP]

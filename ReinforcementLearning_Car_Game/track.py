@@ -1,88 +1,108 @@
 import pygame
 import random
 import math
+import numpy as np
 
 TRACK_COLOR = (50, 50, 50)
 TRACK_WIDTH = random.randint(80, 120)
+   
+QUADRUPLE_SIZE: int = 4
 
-def generate_oval(screen_width, screen_height, num_points=20):
-    """Generate an initial oval shape as the base of the track"""
-    cx, cy = screen_width // 2, screen_height // 2
-    a, b = screen_width // 3, screen_height // 4  # Oval radii
 
-    points = []
-    for i in range(num_points):
-        angle = (i / num_points) * 2 * math.pi
-        x = cx + a * math.cos(angle)
-        y = cy + b * math.sin(angle)
-        points.append((x, y))
+def num_segments(point_chain: tuple) -> int:
+    # There is 1 segment per 4 points, so we must subtract 3 from the number of points  
+    return len(point_chain) - (QUADRUPLE_SIZE - 1)
 
+
+def flatten(list_of_lists) -> list:
+    # E.g. mapping [[1, 2], [3], [4, 5]] to  [1, 2, 3, 4, 5] 
+    return [elem for lst in list_of_lists for elem in lst]
+
+
+def catmull_rom_spline(
+    P0: tuple,
+    P1: tuple,
+    P2: tuple,
+    P3: tuple,
+    num_points: int,
+    alpha: float = 0.5,
+):
+    """
+    Compute the points in the spline segment
+    :param P0, P1, P2, and P3: The (x,y) point pairs that define the Catmull-Rom spline
+    :param num_points: The number of points to include in the resulting curve segment
+    :param alpha: 0.5 for the centripetal spline, 0.0 for the uniform spline, 1.0 for the chordal spline.
+    :return: The points
+    """
+
+    # Calculate t0 to t4. Then only calculate points between P1 and P2.
+    # Reshape linspace so that we can multiply by the points P0 to P3
+    # and get a point for each value of t.
+    def tj(ti: float, pi: tuple, pj: tuple) -> float:
+        xi, yi = pi
+        xj, yj = pj
+        dx, dy = xj - xi, yj - yi
+        l = (dx ** 2 + dy ** 2) ** 0.5
+        return ti + l ** alpha
+
+    t0: float = 0.0
+    t1: float = tj(t0, P0, P1)
+    t2: float = tj(t1, P1, P2)
+    t3: float = tj(t2, P2, P3)
+    t = np.linspace(t1, t2, num_points).reshape(num_points, 1)
+
+    A1 = (t1 - t) / (t1 - t0) * P0 + (t - t0) / (t1 - t0) * P1
+    A2 = (t2 - t) / (t2 - t1) * P1 + (t - t1) / (t2 - t1) * P2
+    A3 = (t3 - t) / (t3 - t2) * P2 + (t - t2) / (t3 - t2) * P3
+    B1 = (t2 - t) / (t2 - t0) * A1 + (t - t0) / (t2 - t0) * A2
+    B2 = (t3 - t) / (t3 - t1) * A2 + (t - t1) / (t3 - t1) * A3
+    points = (t2 - t) / (t2 - t1) * B1 + (t - t1) / (t2 - t1) * B2
     return points
 
-def perturb_points(points, max_offset=40):
-    """Add randomness to the points to create a natural-looking track"""
-    perturbed = []
-    for x, y in points:
-        new_x = x + random.uniform(-max_offset, max_offset)
-        new_y = y + random.uniform(-max_offset, max_offset)
-        perturbed.append((new_x, new_y))
-    return perturbed
 
-def generate_bezier_curve(p0, p1, p2, num_points=30):
-    """Generate points along a quadratic Bézier curve"""
-    curve = []
-    for t in range(num_points + 1):
-        t /= num_points
-        x = (1 - t) ** 2 * p0[0] + 2 * (1 - t) * t * p1[0] + t ** 2 * p2[0]
-        y = (1 - t) ** 2 * p0[1] + 2 * (1 - t) * t * p1[1] + t ** 2 * p2[1]
-        curve.append((x, y))
-    return curve
+def catmull_rom_chain(points: tuple, num_points: int) -> list:
+    """
+    Calculate Catmull-Rom for a sequence of initial points and return the combined curve.
+    :param points: Base points from which the quadruples for the algorithm are taken
+    :param num_points: The number of points to include in each curve segment
+    :return: The chain of all points (points of all segments)
+    """
+    point_quadruples = (  # Prepare function inputs
+        (points[idx_segment_start + d] for d in range(QUADRUPLE_SIZE))
+        for idx_segment_start in range(num_segments(points))
+    )
+    all_splines = (catmull_rom_spline(*pq, num_points) for pq in point_quadruples)
+    return flatten(all_splines)
 
-def generate_track(screen_width, screen_height, num_curves=10):
-    """Create a track by perturbing an oval and smoothing it with Bézier curves"""
-    base_points = generate_oval(screen_width, screen_height, num_curves)
-    perturbed_points = perturb_points(base_points, max_offset=50)
 
-    track_center = []
-    for i in range(len(perturbed_points)):
-        p0 = perturbed_points[i]
-        p1 = perturbed_points[(i + 1) % len(perturbed_points)]  # Next point (looping)
-        p2 = perturbed_points[(i + 2) % len(perturbed_points)]  # Next-next point
+def perpendicular(v):
+    return np.array([-v[1], v[0]])
 
-        curve = generate_bezier_curve(p0, p1, p2)
-        track_center.extend(curve)
+def generate_track(curve_points, track_width):
+    outer_points = []
+    inner_points = []
 
-    return track_center
+    for i in range(len(curve_points)):
+        # Get current and next point
+        p1 = np.array(curve_points[i])
+        p2 = np.array(curve_points[(i + 1) % len(curve_points)])  # Wrap around for closed shape
 
-def get_track_edges(centerline, track_width):
-    """Generate left and right edges based on the centerline"""
-    left_edge = []
-    right_edge = []
-
-    for i in range(len(centerline) - 1):
-        x1, y1 = centerline[i]
-        x2, y2 = centerline[i + 1]
-
-        dx = x2 - x1
-        dy = y2 - y1
-        length = (dx ** 2 + dy ** 2) ** 0.5
-        if length == 0:
+        # Calculate the direction (tangent vector)
+        tangent = p2 - p1
+        if np.linalg.norm(tangent)==0:
             continue
-        perp_x = -dy / length
-        perp_y = dx / length
+        tangent = tangent / np.linalg.norm(tangent)  # Normalize
 
-        left_edge.append((x1 + perp_x * (track_width // 2), y1 + perp_y * (track_width // 2)))
-        right_edge.append((x1 - perp_x * (track_width // 2), y1 - perp_y * (track_width // 2)))
+        # Get the perpendicular (normal vector)
+        normal = perpendicular(tangent)
 
-    return left_edge, right_edge
+        # Offset points to create track width
+        inner_points.append(tuple(p1 + normal * track_width//2))
+        outer_points.append(tuple(p1 - normal * track_width//2))
 
-def draw_track(screen, centerline, track_width):
-    """Draw the track using the centerline and width"""
-    left_edge, right_edge = get_track_edges(centerline, track_width)
+    return outer_points, inner_points
 
-    for i in range(len(left_edge) - 1):
-        pygame.draw.polygon(screen, TRACK_COLOR, [left_edge[i], left_edge[i + 1], right_edge[i + 1], right_edge[i]])
-
-    pygame.draw.aalines(screen, (255, 255, 255), True, left_edge, 2)
-    pygame.draw.aalines(screen, (255, 255, 255), True, right_edge, 2)
-
+def draw_track(screen, outer_track,inner_track,chain_points, track_width):
+    pygame.draw.polygon(screen, (0,0,0), outer_track)
+    pygame.draw.polygon(screen, (0,190,0), inner_track)
+    pygame.draw.aalines(screen, (0,0,255), False, chain_points)
