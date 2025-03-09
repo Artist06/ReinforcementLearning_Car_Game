@@ -143,7 +143,7 @@ while running:
 
     playerX += player_speed * math.cos(math.radians(-angle))
     playerY += player_speed * math.sin(math.radians(-angle))
-    
+    # Prevent player from going out of bounds
     playerX = max(0, min(WIDTH - new_width, playerX))
     playerY = max(0, min(HEIGHT - new_height, playerY))
 
@@ -155,10 +155,6 @@ while running:
     font = pygame.font.SysFont(None, 30)
     fps_text = font.render(f"FPS: {fps}", True, (255, 255, 255))
     screen.blit(fps_text, (10, 10))
-
-    mouse_x, mouse_y = pygame.mouse.get_pos()
-    text = coords.render(f"X: {mouse_x}, Y: {mouse_y}", True, (0, 0, 0))
-    screen.blit(text, (10, 40))
 
     pygame.display.update()
     clock.tick()
