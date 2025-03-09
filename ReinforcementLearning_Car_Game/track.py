@@ -1,32 +1,24 @@
 import pygame
 import random
-import math
 import numpy as np
 
-TRACK_COLOR = (50, 50, 50)
+TRACK_COLOR = (100, 100, 100)
 TRACK_WIDTH = random.randint(80, 100)
-   
-QUADRUPLE_SIZE: int = 4
 
+QUADRUPLE_SIZE = 4
+LINE_GAP = 10  # Increased gap between line segments
+LINE_SEGMENT_LENGTH = 20  # Decreased length of each line segment
+LINE_WIDTH = 5  # Width of the line
 
 def num_segments(point_chain: tuple) -> int:
-    # There is 1 segment per 4 points, so we must subtract 3 from the number of points  
+    # There is 1 segment per 4 points, so we must subtract 3 from the number of points
     return len(point_chain) - (QUADRUPLE_SIZE - 1)
 
-
 def flatten(list_of_lists) -> list:
-    # E.g. mapping [[1, 2], [3], [4, 5]] to  [1, 2, 3, 4, 5] 
+    # E.g. mapping [[1, 2], [3], [4, 5]] to [1, 2, 3, 4, 5]
     return [elem for lst in list_of_lists for elem in lst]
 
-
-def catmull_rom_spline(
-    P0: tuple,
-    P1: tuple,
-    P2: tuple,
-    P3: tuple,
-    num_points: int,
-    alpha: float = 0.5,
-):
+def catmull_rom_spline(P0: tuple, P1: tuple, P2: tuple, P3: tuple, num_points: int, alpha: float = 0.5):
     """
     Compute the points in the spline segment
     :param P0, P1, P2, and P3: The (x,y) point pairs that define the Catmull-Rom spline
@@ -34,10 +26,6 @@ def catmull_rom_spline(
     :param alpha: 0.5 for the centripetal spline, 0.0 for the uniform spline, 1.0 for the chordal spline.
     :return: The points
     """
-
-    # Calculate t0 to t4. Then only calculate points between P1 and P2.
-    # Reshape linspace so that we can multiply by the points P0 to P3
-    # and get a point for each value of t.
     def tj(ti: float, pi: tuple, pj: tuple) -> float:
         xi, yi = pi
         xj, yj = pj
@@ -59,7 +47,6 @@ def catmull_rom_spline(
     points = (t2 - t) / (t2 - t1) * B1 + (t - t1) / (t2 - t1) * B2
     return points
 
-
 def catmull_rom_chain(points: tuple, num_points: int) -> list:
     """
     Calculate Catmull-Rom for a sequence of initial points and return the combined curve.
@@ -73,7 +60,6 @@ def catmull_rom_chain(points: tuple, num_points: int) -> list:
     )
     all_splines = (catmull_rom_spline(*pq, num_points) for pq in point_quadruples)
     return flatten(all_splines)
-
 
 def perpendicular(v):
     return np.array([-v[1], v[0]])
@@ -89,7 +75,7 @@ def generate_track(curve_points, track_width):
 
         # Calculate the direction (tangent vector)
         tangent = p2 - p1
-        if np.linalg.norm(tangent)==0:
+        if np.linalg.norm(tangent) == 0:
             continue
         tangent = tangent / np.linalg.norm(tangent)  # Normalize
 
@@ -97,12 +83,27 @@ def generate_track(curve_points, track_width):
         normal = perpendicular(tangent)
 
         # Offset points to create track width
-        inner_points.append(tuple(p1 + normal * track_width//2))
-        outer_points.append(tuple(p1 - normal * track_width//2))
+        inner_points.append(tuple(p1 + normal * track_width // 2))
+        outer_points.append(tuple(p1 - normal * track_width // 2))
 
     return outer_points, inner_points
 
-def draw_track(screen, outer_track,inner_track,chain_points, track_width):
-    pygame.draw.polygon(screen, (0,0,0), outer_track)
-    pygame.draw.polygon(screen, (0,190,0), inner_track)
-    pygame.draw.aalines(screen, (0,0,255), False, chain_points)
+def draw_track(screen, outer_track, inner_track, chain_points, track_width):
+    # Draw the filled track area
+    track_color = (100, 100, 100)  # Color for the filled track area
+    for i in range(len(inner_track)):
+        next_i = (i + 1) % len(inner_track)
+        pygame.draw.polygon(screen, track_color, [inner_track[i], inner_track[next_i], outer_track[next_i], outer_track[i]])
+
+    # Draw the outer track boundary
+    pygame.draw.polygon(screen, track_color, outer_track, width=3)
+
+    # Draw the inner track boundary
+    pygame.draw.polygon(screen, track_color, inner_track, width=3)
+
+    # Draw the central white line in segments
+    segment_start = 0
+    while segment_start < len(chain_points):
+        segment_end = min(segment_start + LINE_SEGMENT_LENGTH, len(chain_points) - 1)
+        pygame.draw.lines(screen, (255, 255, 255), False, chain_points[segment_start:segment_end], width=LINE_WIDTH)
+        segment_start += LINE_SEGMENT_LENGTH + LINE_GAP
