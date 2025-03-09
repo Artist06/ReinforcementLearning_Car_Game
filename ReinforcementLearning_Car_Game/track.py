@@ -4,7 +4,7 @@ import math
 import numpy as np
 
 TRACK_COLOR = (50, 50, 50)
-TRACK_WIDTH = random.randint(80, 120)
+TRACK_WIDTH = random.randint(80, 100)
    
 QUADRUPLE_SIZE: int = 4
 

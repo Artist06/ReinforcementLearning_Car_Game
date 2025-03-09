@@ -1,5 +1,6 @@
 import pygame
 import math
+import random
 from track import draw_track, TRACK_WIDTH, catmull_rom_chain, generate_track
 
 pygame.init()
@@ -27,7 +28,16 @@ brake_img = pygame.transform.scale(pygame.image.load('images/accelerator.png'), 
 accelerator_rect = accelerator_img.get_rect(bottomleft=(50, HEIGHT - 20))
 brake_rect = brake_img.get_rect(bottomleft=(150, HEIGHT - 20))
 
-track_points = [(400, 300), (200, 300), (240, 100), (600, 100), (600, 500), (240, 500), (400, 300), (200, 300), (240, 100)]
+track_points=[]
+for i in range(6):
+    if i<3:
+        track_points.append((random.randint(40+(i%3)*240, 40+((i%3)+1)*240), 40+random.randint((i//3)*250,((i//3)+1)*250)))
+    else:
+        track_points.append((random.randint(40+(2-(i%3))*240, 40+(3-(i%3))*240), 50+random.randint((i//3)*250,((i//3)+1)*250)))
+
+for i in range(3):
+    track_points.append(track_points[i])
+#print(track_points)
 curve_points=catmull_rom_chain(track_points, NUM_POINTS)
 outer_points, inner_points=generate_track(curve_points, TRACK_WIDTH)
 
@@ -70,6 +80,7 @@ def draw_pedals(accelerating, braking):
     else:
         screen.blit(brake_img, brake_rect.topleft)
 
+coords=pygame.font.Font(None, 36)       #coords display
 running = True
 while running:
     screen.fill((0, 190, 0))
@@ -135,6 +146,10 @@ while running:
     font = pygame.font.SysFont(None, 30)
     fps_text = font.render(f"FPS: {fps}", True, (255, 255, 255))
     screen.blit(fps_text, (10, 10))
+    
+    mouse_x, mouse_y = pygame.mouse.get_pos()
+    text = coords.render(f"X: {mouse_x}, Y: {mouse_y}", True, (0, 0, 0))
+    screen.blit(text, (10, 40))
 
     pygame.display.update()
     clock.tick()
