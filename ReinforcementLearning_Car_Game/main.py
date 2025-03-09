@@ -28,18 +28,20 @@ brake_img = pygame.transform.scale(pygame.image.load('images/accelerator.png'), 
 accelerator_rect = accelerator_img.get_rect(bottomleft=(50, HEIGHT - 20))
 brake_rect = brake_img.get_rect(bottomleft=(150, HEIGHT - 20))
 
-track_points=[]
+track_points = []
 for i in range(6):
-    if i<3:
-        track_points.append((random.randint(40+(i%3)*240, 40+((i%3)+1)*240), 40+random.randint((i//3)*250,((i//3)+1)*250)))
+    if i < 3:
+        track_points.append((random.randint(40 + (i % 3) * 240, 40 + ((i % 3) + 1) * 240),
+                             40 + random.randint((i // 3) * 250, ((i // 3) + 1) * 250)))
     else:
-        track_points.append((random.randint(40+(2-(i%3))*240, 40+(3-(i%3))*240), 50+random.randint((i//3)*250,((i//3)+1)*250)))
+        track_points.append((random.randint(40 + (2 - (i % 3)) * 240, 40 + (3 - (i % 3)) * 240),
+                             50 + random.randint((i // 3) * 250, ((i // 3) + 1) * 250)))
 
 for i in range(3):
     track_points.append(track_points[i])
-#print(track_points)
-curve_points=catmull_rom_chain(track_points, NUM_POINTS)
-outer_points, inner_points=generate_track(curve_points, TRACK_WIDTH)
+# print(track_points)
+curve_points = catmull_rom_chain(track_points, NUM_POINTS)
+outer_points, inner_points = generate_track(curve_points, TRACK_WIDTH)
 
 playerX, playerY = track_points[0]
 angle = math.degrees(math.atan2(track_points[1][1] - playerY, track_points[1][0] - playerX))
@@ -57,15 +59,18 @@ steering_return_speed = 2
 
 clock = pygame.time.Clock()
 
+
 def player(x, y, angle):
     rotated_image = pygame.transform.rotate(playerImg, angle)
     new_rect = rotated_image.get_rect(center=(x + new_width // 2, y + new_height // 2))
     screen.blit(rotated_image, new_rect.topleft)
 
+
 def draw_steering_wheel():
     rotated_wheel = pygame.transform.rotate(steering_wheel_img, -steering_angle)
     wheel_rect = rotated_wheel.get_rect(center=(WIDTH - 100, HEIGHT - 100))
     screen.blit(rotated_wheel, wheel_rect.topleft)
+
 
 def draw_pedals(accelerating, braking):
     if accelerating:
@@ -80,7 +85,8 @@ def draw_pedals(accelerating, braking):
     else:
         screen.blit(brake_img, brake_rect.topleft)
 
-coords=pygame.font.Font(None, 36)       #coords display
+
+coords = pygame.font.Font(None, 36)  # coords display
 running = True
 while running:
     screen.fill((0, 190, 0))
@@ -137,6 +143,9 @@ while running:
 
     playerX += player_speed * math.cos(math.radians(-angle))
     playerY += player_speed * math.sin(math.radians(-angle))
+    
+    playerX = max(0, min(WIDTH - new_width, playerX))
+    playerY = max(0, min(HEIGHT - new_height, playerY))
 
     player(playerX, playerY, angle)
     draw_steering_wheel()
@@ -146,7 +155,7 @@ while running:
     font = pygame.font.SysFont(None, 30)
     fps_text = font.render(f"FPS: {fps}", True, (255, 255, 255))
     screen.blit(fps_text, (10, 10))
-    
+
     mouse_x, mouse_y = pygame.mouse.get_pos()
     text = coords.render(f"X: {mouse_x}, Y: {mouse_y}", True, (0, 0, 0))
     screen.blit(text, (10, 40))
