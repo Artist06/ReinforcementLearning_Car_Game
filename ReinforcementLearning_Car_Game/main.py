@@ -1,9 +1,11 @@
 import pygame
 import math
 import random
+from pygame import mixer
 from track import draw_track, TRACK_WIDTH, catmull_rom_chain, generate_track
 
 pygame.init()
+mixer.init()
 
 NUM_POINTS = 100
 WIDTH, HEIGHT = 800, 600
@@ -46,7 +48,8 @@ def draw_text(text, font, color, surface, x, y):
 def main_menu():
     global current_option
     menu_running = True
-
+    mixer.music.load("sounds/menu_background.wav")
+    mixer.music.play(-1)        #menu background starts playing
     while menu_running:
         screen.fill((15, 70, 8))
 
@@ -60,17 +63,27 @@ def main_menu():
                 return "Exit"
 
             if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    menu_running = False
+                    mixer.music.stop()  #menu background stops
+                    return "Exit"
                 if event.key == pygame.K_UP:
                     current_option = (current_option - 1) % len(menu_options)
                 if event.key == pygame.K_DOWN:
                     current_option = (current_option + 1) % len(menu_options)
                 if event.key == pygame.K_RETURN:
                     if menu_options[current_option] == "Start Game":
+                        mixer.music.stop()  #menu background stops
                         return "Start Game"
                     elif menu_options[current_option] == "Rules":
-                        rules_menu()
+                        rule_return = rules_menu()
+                        if rule_return == "Exit":
+                            menu_running = False
+                            mixer.music.stop()  #menu background stops
+                            return "Exit"
                     elif menu_options[current_option] == "Exit":
                         menu_running = False
+                        mixer.music.stop()   #menu background stops
                         return "Exit"
 
         pygame.display.update()
@@ -213,15 +226,28 @@ def game_loop():
     clock = pygame.time.Clock()
     running = True
     game_over = False
+    play_once_over = True
+    engine_start_once = True
+    engine_event = pygame.USEREVENT + 1         #delay for engine sound
+    pygame.time.set_timer(engine_event, 2000)
+    
+    #loading sounds
+    engine_sound=mixer.Sound("sounds/engine.mp3")
+    engine_start_sound=mixer.Sound("sounds/engine_start.wav")
+    game_over_sound=mixer.Sound("sounds/game-over.mp3")
 
     while running:
         screen.fill((0, 170, 0))
-
+        if engine_start_once:               #engine starts once
+            engine_start_sound.play()
+            engine_start_once = False
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
             elif event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
                 running = False
+            if event.type == engine_event:      #engine sound starts playing
+                engine_sound.play(-1)
 
         if not game_over:
             draw_track(screen, outer_points, inner_points, curve_points, TRACK_WIDTH)
@@ -295,6 +321,10 @@ def game_loop():
             for tree_pos in tree_positions:
                 screen.blit(tree_img, tree_pos)
         else:
+            engine_sound.stop()     #engine sound stops
+            if play_once_over:      #game over sound plays once
+                game_over_sound.play()
+                play_once_over = False
             game_over_text = font.render("Game Over", True, (255, 0, 0))
             final_score_text = font.render(f"Final Score: {int(distance_covered/10)}", True, (255, 255, 255))
             screen.blit(game_over_text, (WIDTH // 2 - game_over_text.get_width() // 2, HEIGHT // 2 - game_over_text.get_height() // 2))
