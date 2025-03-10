@@ -28,6 +28,10 @@ brake_img = pygame.transform.scale(pygame.image.load('images/accelerator.png'), 
 accelerator_rect = accelerator_img.get_rect(bottomleft=(50, HEIGHT - 20))
 brake_rect = brake_img.get_rect(bottomleft=(150, HEIGHT - 20))
 
+tree_img = pygame.image.load('images/grass.png')
+tree_size = (50, 50)
+tree_img = pygame.transform.scale(tree_img, tree_size)
+
 track_points = []
 for i in range(6):
     if i < 3:
@@ -59,6 +63,44 @@ steering_return_speed = 2
 
 clock = pygame.time.Clock()
 
+distance_covered = 0
+font = pygame.font.SysFont(None, 30)
+
+def generate_tree_positions(num_trees, outer_points, tree_size, min_distance):
+    tree_positions = []
+    control_areas = [(WIDTH - 150, HEIGHT - 150, 100, 100),  # Steering wheel area
+                     (0, HEIGHT - 100, 100, 100),  # Accelerator area
+                     (150, HEIGHT - 100, 100, 100)]  # Brake area
+
+    while len(tree_positions) < num_trees:
+        tree_x = random.randint(0, WIDTH - tree_size[0])
+        tree_y = random.randint(0, HEIGHT - tree_size[1])
+
+        # Check if the tree is outside the track and controls
+        on_track_or_controls = False
+        for outer_point in outer_points:
+            distance = math.sqrt((tree_x - outer_point[0]) ** 2 + (tree_y - outer_point[1]) ** 2)
+            if distance < TRACK_WIDTH:
+                on_track_or_controls = True
+                break
+        for area in control_areas:
+            if area[0] <= tree_x <= area[0] + area[2] and area[1] <= tree_y <= area[1] + area[3]:
+                on_track_or_controls = True
+                break
+
+        if not on_track_or_controls:
+            too_close = False
+            for pos in tree_positions:
+                if math.sqrt((tree_x - pos[0]) ** 2 + (tree_y - pos[1]) ** 2) < min_distance:
+                    too_close = True
+                    break
+            if not too_close:
+                tree_positions.append((tree_x, tree_y))
+
+    return tree_positions
+
+
+tree_positions = generate_tree_positions(10, outer_points, tree_size, min_distance=100)
 
 def player(x, y, angle):
     rotated_image = pygame.transform.rotate(playerImg, angle)
@@ -89,7 +131,7 @@ def draw_pedals(accelerating, braking):
 coords = pygame.font.Font(None, 36)  # coords display
 running = True
 while running:
-    screen.fill((0, 190, 0))
+    screen.fill((0, 170, 0))
 
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
@@ -143,6 +185,11 @@ while running:
 
     playerX += player_speed * math.cos(math.radians(-angle))
     playerY += player_speed * math.sin(math.radians(-angle))
+
+    distance_covered += abs(player_speed)
+    score_text = font.render(f"Score: {int(distance_covered/10)}", True, (255, 255, 255))
+    screen.blit(score_text, (WIDTH - 150, 10))
+
     # Prevent player from going out of bounds
     playerX = max(0, min(WIDTH - new_width, playerX))
     playerY = max(0, min(HEIGHT - new_height, playerY))
@@ -151,10 +198,14 @@ while running:
     draw_steering_wheel()
     draw_pedals(accelerating, braking)
 
+    for tree_pos in tree_positions:
+        screen.blit(tree_img, tree_pos)
+
     fps = int(clock.get_fps())
-    font = pygame.font.SysFont(None, 30)
     fps_text = font.render(f"FPS: {fps}", True, (255, 255, 255))
     screen.blit(fps_text, (10, 10))
 
     pygame.display.update()
     clock.tick()
+
+pygame.quit()
