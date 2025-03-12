@@ -1,3 +1,4 @@
+from lib2to3.pygram import python_grammar_no_print_and_exec_statement
 import pygame
 import math
 import random
@@ -38,8 +39,9 @@ font = pygame.font.SysFont(None, 50)
 
 # Menu options
 menu_options = ["Start Game", "Rules", "Exit"]
+over_options = ["Restart", "Main Menu", "Exit"]
 current_option = 0
-
+over_option = 0
 
 def draw_text(text, font, color, surface, x, y):
     text_obj = font.render(text, True, color)
@@ -90,7 +92,56 @@ def main_menu():
 
         pygame.display.update()
 
-
+def over_screen(score):
+    global over_option
+    font_size = 30
+    font = pygame.font.Font(None, font_size)
+    
+    over_screen_running = True
+    play_once_over = True
+    
+    game_over_sound = mixer.Sound("sounds/game-over.mp3")
+    
+    while over_screen_running:
+        screen.fill((15, 70, 8))
+        if play_once_over:  # game over sound plays once
+            game_over_sound.play()                
+            play_once_over = False
+        game_over_text = font.render("Game Over", True, (255, 0, 0))
+        final_score_text = font.render(f"Final Score: {score}", True, (255, 255, 255))
+        screen.blit(game_over_text,
+                    (WIDTH // 2 - game_over_text.get_width() // 2, HEIGHT // 2 - game_over_text.get_height() // 2 -100))
+        screen.blit(final_score_text, (
+        WIDTH // 2 - final_score_text.get_width() // 2, HEIGHT // 2 - final_score_text.get_height() // 2 - 50))
+        for i,option in enumerate(over_options):
+            color = (255, 255, 255) if i == over_option else (100, 100, 100)
+            option_text = font.render(option, True, color)
+            screen.blit(option_text, (WIDTH//2 - option_text.get_width()//2 ,HEIGHT//2 - option_text.get_height()//2 +i*50))
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                over_screen_running = False
+                return "Exit"
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    over_screen_running = False
+                    return "Exit"
+                if event.key == pygame.K_UP:
+                    over_option = (over_option - 1) % len(over_options)
+                if event.key == pygame.K_DOWN:
+                    over_option = (over_option + 1) % len(over_options)
+                if event.key == pygame.K_RETURN:
+                    if over_options[over_option] == "Restart":
+                        over_option = 0
+                        return "Restart"
+                    elif over_options[over_option] == "Main Menu":
+                        over_option = 0
+                        return "Main Menu"
+                    elif over_options[over_option] == "Exit":
+                        over_option = 0
+                        over_screen_running = False
+                        return "Exit"
+        pygame.display.update()
+    
 def rules_menu():
     rules_running = True
     font_small = pygame.font.SysFont(None, 36)
@@ -235,7 +286,6 @@ def game_loop():
     clock = pygame.time.Clock()
     running = True
     game_over = False
-    play_once_over = True
     engine_start_once = True
     engine_event = pygame.USEREVENT + 1  # delay for engine sound
     pygame.time.set_timer(engine_event, 2000)
@@ -243,7 +293,6 @@ def game_loop():
     # loading sounds
     engine_sound = mixer.Sound("sounds/engine.mp3")
     engine_start_sound = mixer.Sound("sounds/engine_start.wav")
-    game_over_sound = mixer.Sound("sounds/game-over.mp3")
 
     while running:
         screen.fill((0, 170, 0))
@@ -339,16 +388,17 @@ def game_loop():
 
         else:
             engine_sound.stop()  # engine sound stops
-            if play_once_over:  # game over sound plays once
-                game_over_sound.play()
-                play_once_over = False
-            game_over_text = font.render("Game Over", True, (255, 0, 0))
-            final_score_text = font.render(f"Final Score: {int(distance_covered / 10)}", True, (255, 255, 255))
-            screen.blit(game_over_text,
-                        (WIDTH // 2 - game_over_text.get_width() // 2, HEIGHT // 2 - game_over_text.get_height() // 2))
-            screen.blit(final_score_text, (
-            WIDTH // 2 - final_score_text.get_width() // 2, HEIGHT // 2 - final_score_text.get_height() // 2 + 50))
-
+            score = int(distance_covered / 10)
+            over = over_screen(score)
+            if over=="Exit":
+                running = False
+                return "Exit"
+            elif over=="Main Menu":
+                running = False
+                return "Main Menu"
+            elif over=="Restart":
+                running = False
+                return "Restart"
         fps = int(clock.get_fps())
         fps_text = font.render(f"FPS: {fps}", True, (255, 255, 255))
         screen.blit(fps_text, (15, 15))
@@ -363,7 +413,14 @@ def game_loop():
 if __name__ == "__main__":
     while True:
         menu_selection = main_menu()
-        if menu_selection == "Start Game":
-            game_loop()
-        elif menu_selection == "Exit":
+        while menu_selection == "Start Game":
+            game_res = game_loop()
+            if game_res == "Restart":
+                continue
+            elif game_res == "Main Menu":
+                menu_selection = "New iteration"
+            elif game_res == "Exit":
+                menu_selection = "Exit"
+            
+        if menu_selection == "Exit":
             break
