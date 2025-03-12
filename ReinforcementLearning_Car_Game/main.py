@@ -40,16 +40,18 @@ font = pygame.font.SysFont(None, 50)
 menu_options = ["Start Game", "Rules", "Exit"]
 current_option = 0
 
+
 def draw_text(text, font, color, surface, x, y):
     text_obj = font.render(text, True, color)
     text_rect = text_obj.get_rect(center=(x, y))
     surface.blit(text_obj, text_rect)
 
+
 def main_menu():
     global current_option
     menu_running = True
     mixer.music.load("sounds/menu_background.wav")
-    mixer.music.play(-1)        #menu background starts playing
+    mixer.music.play(-1)  # menu background starts playing
     while menu_running:
         screen.fill((15, 70, 8))
 
@@ -65,7 +67,7 @@ def main_menu():
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
                     menu_running = False
-                    mixer.music.stop()  #menu background stops
+                    mixer.music.stop()  # menu background stops
                     return "Exit"
                 if event.key == pygame.K_UP:
                     current_option = (current_option - 1) % len(menu_options)
@@ -73,20 +75,21 @@ def main_menu():
                     current_option = (current_option + 1) % len(menu_options)
                 if event.key == pygame.K_RETURN:
                     if menu_options[current_option] == "Start Game":
-                        mixer.music.stop()  #menu background stops
+                        mixer.music.stop()  # menu background stops
                         return "Start Game"
                     elif menu_options[current_option] == "Rules":
                         rule_return = rules_menu()
                         if rule_return == "Exit":
                             menu_running = False
-                            mixer.music.stop()  #menu background stops
+                            mixer.music.stop()  # menu background stops
                             return "Exit"
                     elif menu_options[current_option] == "Exit":
                         menu_running = False
-                        mixer.music.stop()   #menu background stops
+                        mixer.music.stop()  # menu background stops
                         return "Exit"
 
         pygame.display.update()
+
 
 def rules_menu():
     rules_running = True
@@ -117,6 +120,7 @@ def rules_menu():
                     rules_running = False
 
         pygame.display.update()
+
 
 def generate_tree_positions(num_trees, outer_points, tree_size, min_distance):
     tree_positions = []
@@ -151,15 +155,18 @@ def generate_tree_positions(num_trees, outer_points, tree_size, min_distance):
 
     return tree_positions
 
+
 def player(x, y, angle):
     rotated_image = pygame.transform.rotate(playerImg, angle)
     new_rect = rotated_image.get_rect(center=(x + new_width // 2, y + new_height // 2))
     screen.blit(rotated_image, new_rect.topleft)
 
+
 def draw_steering_wheel():
     rotated_wheel = pygame.transform.rotate(steering_wheel_img, -steering_angle)
     wheel_rect = rotated_wheel.get_rect(center=(WIDTH - 100, HEIGHT - 100))
     screen.blit(rotated_wheel, wheel_rect.topleft)
+
 
 def draw_pedals(accelerating, braking):
     if accelerating:
@@ -174,6 +181,7 @@ def draw_pedals(accelerating, braking):
     else:
         screen.blit(brake_img, brake_rect.topleft)
 
+
 def is_within_track(car_rect, inner_points, outer_points):
     def get_distance(point1, point2):
         return math.sqrt((point1[0] - point2[0]) ** 2 + (point1[1] - point2[1]) ** 2)
@@ -185,6 +193,7 @@ def is_within_track(car_rect, inner_points, outer_points):
             return True
 
     return False
+
 
 def game_loop():
     font_size = 30
@@ -228,17 +237,17 @@ def game_loop():
     game_over = False
     play_once_over = True
     engine_start_once = True
-    engine_event = pygame.USEREVENT + 1         #delay for engine sound
+    engine_event = pygame.USEREVENT + 1  # delay for engine sound
     pygame.time.set_timer(engine_event, 2000)
-    
-    #loading sounds
-    engine_sound=mixer.Sound("sounds/engine.mp3")
-    engine_start_sound=mixer.Sound("sounds/engine_start.wav")
-    game_over_sound=mixer.Sound("sounds/game-over.mp3")
+
+    # loading sounds
+    engine_sound = mixer.Sound("sounds/engine.mp3")
+    engine_start_sound = mixer.Sound("sounds/engine_start.wav")
+    game_over_sound = mixer.Sound("sounds/game-over.mp3")
 
     while running:
         screen.fill((0, 170, 0))
-        if engine_start_once:               #engine starts once
+        if engine_start_once:  # engine starts once
             engine_start_sound.play()
             engine_start_once = False
         for event in pygame.event.get():
@@ -246,7 +255,7 @@ def game_loop():
                 running = False
             elif event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
                 running = False
-            if event.type == engine_event:      #engine sound starts playing
+            if event.type == engine_event:  # engine sound starts playing
                 engine_sound.play(-1)
 
         if not game_over:
@@ -302,13 +311,10 @@ def game_loop():
             if player_speed > 0:  # Moving forward
                 distance_covered += player_speed
             elif player_speed < 0:  # Moving backward
-                if(distance_covered>=0):
+                if (distance_covered >= 0):
                     distance_covered += player_speed
                 else:
                     distance_covered = 0
-                    
-            score_text = font.render(f"Score: {int(distance_covered/10)}", True, (255, 255, 255))
-            screen.blit(score_text, (WIDTH - 200, 15))
 
             rotated_image = pygame.transform.rotate(playerImg, angle)
             player_rect = rotated_image.get_rect(center=(playerX + new_width // 2, playerY + new_height // 2))
@@ -322,20 +328,26 @@ def game_loop():
             playerY = max(0, min(HEIGHT - new_height, playerY))
 
             player(playerX, playerY, angle)
+            for tree_pos in tree_positions:
+                screen.blit(tree_img, tree_pos)
+
+            score_text = font.render(f"Score: {int(distance_covered / 10)}", True, (255, 255, 255))
+            screen.blit(score_text, (WIDTH - 200, 15))
+
             draw_steering_wheel()
             draw_pedals(accelerating, braking)
 
-            for tree_pos in tree_positions:
-                screen.blit(tree_img, tree_pos)
         else:
-            engine_sound.stop()     #engine sound stops
-            if play_once_over:      #game over sound plays once
+            engine_sound.stop()  # engine sound stops
+            if play_once_over:  # game over sound plays once
                 game_over_sound.play()
                 play_once_over = False
             game_over_text = font.render("Game Over", True, (255, 0, 0))
-            final_score_text = font.render(f"Final Score: {int(distance_covered/10)}", True, (255, 255, 255))
-            screen.blit(game_over_text, (WIDTH // 2 - game_over_text.get_width() // 2, HEIGHT // 2 - game_over_text.get_height() // 2))
-            screen.blit(final_score_text, (WIDTH // 2 - final_score_text.get_width() // 2, HEIGHT // 2 - final_score_text.get_height() // 2 + 50))
+            final_score_text = font.render(f"Final Score: {int(distance_covered / 10)}", True, (255, 255, 255))
+            screen.blit(game_over_text,
+                        (WIDTH // 2 - game_over_text.get_width() // 2, HEIGHT // 2 - game_over_text.get_height() // 2))
+            screen.blit(final_score_text, (
+            WIDTH // 2 - final_score_text.get_width() // 2, HEIGHT // 2 - final_score_text.get_height() // 2 + 50))
 
         fps = int(clock.get_fps())
         fps_text = font.render(f"FPS: {fps}", True, (255, 255, 255))
@@ -345,6 +357,7 @@ def game_loop():
         clock.tick()
 
     pygame.quit()
+
 
 # Main loop
 if __name__ == "__main__":
