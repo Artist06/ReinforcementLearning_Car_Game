@@ -299,7 +299,14 @@ def game_loop():
             playerX += player_speed * math.cos(math.radians(-angle))
             playerY += player_speed * math.sin(math.radians(-angle))
 
-            distance_covered += abs(player_speed)
+            if player_speed > 0:  # Moving forward
+                distance_covered += player_speed
+            elif player_speed < 0:  # Moving backward
+                if(distance_covered>=0):
+                    distance_covered += player_speed
+                else:
+                    distance_covered = 0
+                    
             score_text = font.render(f"Score: {int(distance_covered/10)}", True, (255, 255, 255))
             screen.blit(score_text, (WIDTH - 200, 15))
 
