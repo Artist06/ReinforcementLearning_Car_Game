@@ -1,4 +1,3 @@
-from lib2to3.pygram import python_grammar_no_print_and_exec_statement
 import pygame
 import math
 import random
