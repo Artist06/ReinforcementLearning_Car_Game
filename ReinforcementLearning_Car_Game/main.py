@@ -236,13 +236,26 @@ def is_within_track(car_rect, inner_points, outer_points):
     def get_distance(point1, point2):
         return math.sqrt((point1[0] - point2[0]) ** 2 + (point1[1] - point2[1]) ** 2)
 
-    for i in range(len(inner_points) - 1):
-        inner_dist = get_distance(car_rect.center, inner_points[i])
-        outer_dist = get_distance(car_rect.center, outer_points[i])
-        if inner_dist < TRACK_WIDTH and outer_dist < TRACK_WIDTH:
-            return True
+    car_length = car_rect.height // 2  
+    angle_rad = math.radians(-angle)  
 
-    return False
+    front_point = (car_rect.centerx + car_length * math.cos(angle_rad),
+                   car_rect.centery + car_length * math.sin(angle_rad))
+    rear_point = (car_rect.centerx - car_length * math.cos(angle_rad),
+                  car_rect.centery - car_length * math.sin(angle_rad))
+
+    for i in range(len(inner_points) - 1):
+        inner_front_dist = get_distance(front_point, inner_points[i])
+        outer_front_dist = get_distance(front_point, outer_points[i])
+        inner_rear_dist = get_distance(rear_point, inner_points[i])
+        outer_rear_dist = get_distance(rear_point, outer_points[i])
+
+        if (inner_front_dist < TRACK_WIDTH and outer_front_dist < TRACK_WIDTH) and \
+           (inner_rear_dist < TRACK_WIDTH and outer_rear_dist < TRACK_WIDTH):
+            return True  # Both front and rear are inside the track
+
+    return False 
+
 
 
 def game_loop():
@@ -265,8 +278,13 @@ def game_loop():
     curve_points = catmull_rom_chain(track_points, NUM_POINTS)
     outer_points, inner_points = generate_track(curve_points, TRACK_WIDTH)
 
-    playerX, playerY = curve_points[0]
-    angle = math.degrees(math.atan2(curve_points[1][1] - playerY, curve_points[1][0] - playerX))
+    start_index = 5  # Move a few points forward to avoid track boundary issues
+    playerX, playerY = (outer_points[start_index][0] + inner_points[start_index][0]) / 2, \
+                       (outer_points[start_index][1] + inner_points[start_index][1]) / 2
+
+    nextX, nextY = (outer_points[start_index + 1][0] + inner_points[start_index + 1][0]) / 2, \
+                   (outer_points[start_index + 1][1] + inner_points[start_index + 1][1]) / 2
+    angle = -math.degrees(math.atan2(nextY - playerY, nextX - playerX))  
 
     player_speed = 0
     acceleration = 0.005
