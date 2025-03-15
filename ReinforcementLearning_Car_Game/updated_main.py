@@ -16,7 +16,7 @@ pygame.display.set_caption("Track Invaders")
 
 icon = pygame.image.load('images/racing.png')
 pygame.display.set_icon(icon)
-
+    
 playerImg = pygame.image.load('images/racing-car.png')
 new_width = 48
 new_height = int((new_width / playerImg.get_width()) * playerImg.get_height())
@@ -73,9 +73,15 @@ def save_track_image():
 
     # Draw the track exactly like in the game
     draw_track(screen, outer_points, inner_points, curve_points, TRACK_WIDTH)
-
+    #print("YES",(int(curve_points[0][0]),int(curve_points[0][1])))
+    screen.set_at((int(curve_points[0][0]),int(curve_points[0][1])), (255,0,255))
+    pygame.display.flip()
     # Save the track image as map.png
     pygame.image.save(screen, "map.png")
+    loaded_map = pygame.image.load("map.png")
+    color = loaded_map.get_at((int(curve_points[0][0]), int(curve_points[0][1])))
+
+    #print(f"Pixel color at ({int(curve_points[0][0])}, {int(curve_points[0][1])}): {color}")
     print("Track image saved as map.png")
 
 
@@ -108,7 +114,7 @@ def main_menu():
                         return "Start Game"
                     elif menu_options[current_option] == "Agent Mode":
                         save_track_image() 
-                        os.system("python agent.py")  
+                        os.system("python ReinforcementLearning_Car_Game/agent.py")  
 
                     elif menu_options[current_option] == "Rules":
                         rule_return = rules_menu()

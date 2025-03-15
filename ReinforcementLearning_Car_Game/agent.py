@@ -19,14 +19,14 @@ current_generation = 0 # Generation counter
 
 class Car:
 
-    def __init__(self):
+    def __init__(self, startx, starty):
         # Load Car Sprite and Rotate
         self.sprite = pygame.image.load('images/racing-car.png').convert_alpha() 
         self.sprite = pygame.transform.scale(self.sprite, (CAR_SIZE_X, CAR_SIZE_Y))
         self.rotated_sprite = self.sprite 
 
         # self.position = [690, 740] # Starting Position
-        self.position = [WIDTH // 2 - CAR_SIZE_X // 2, HEIGHT - 100]  
+        self.position = [startx, starty]  
         self.angle = 0
         self.speed = 0
 
@@ -169,12 +169,26 @@ def run_simulation(genomes, config):
     pygame.init()
     screen = pygame.display.set_mode((WIDTH, HEIGHT))
 
-    global current_generation
+    global current_generation   
     current_generation += 1
 
     game_map = pygame.image.load('map.png').convert()
-    game_map = pygame.transform.scale(game_map, (WIDTH, HEIGHT))
-
+    #game_map = pygame.transform.scale(game_map, (WIDTH, HEIGHT))
+    screen.blit(game_map, (0, 0))  
+    pygame.display.flip()
+    startx=0; starty=0
+    done=False
+    for i in range(800):
+        for j in range(600):
+            color=screen.get_at((i,j))
+            if color.r==255 and color.g==0 and color.b==255:
+                screen.set_at((i,j), (100,100,100))
+                done=True
+                startx=i; starty=j
+                break
+        if done:
+            break
+    #print(startx, starty)
     clock = pygame.time.Clock()
     font = pygame.font.SysFont("Arial", 20)
 
@@ -188,7 +202,7 @@ def run_simulation(genomes, config):
 
         net = neat.nn.FeedForwardNetwork.create(genome, config)
         genome.fitness = 0  
-        car = Car()
+        car = Car(startx, starty)
 
         current_score = 0  
         counter = 0
@@ -280,7 +294,7 @@ def run_simulation(genomes, config):
 
 if __name__ == "__main__":
     # Load Config
-    config_path = "./config.txt"
+    config_path = "ReinforcementLearning_Car_Game/config.txt"
     config = neat.config.Config(neat.DefaultGenome,
                                 neat.DefaultReproduction,
                                 neat.DefaultSpeciesSet,
