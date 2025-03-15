@@ -17,6 +17,8 @@ Files
 
 agent.py – Implements the DQN-based agent using ray tracing for obstacle detection and decision-making.
 
+main.py - Game loop without agent (can be used for playing game manually and trianing multiple agents independently).
+
 updated_main.py – The main game loop managing rendering, event handling, and agent interaction.
 
 track.py – Handles track generation and game physics.
