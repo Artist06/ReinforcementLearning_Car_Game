@@ -31,7 +31,7 @@ Installation::
 
 Clone the Repository:
 
-git clone https://github.com/01prakash-aditya/ReinforcementLearning_Car_Game.git
+git clone https://github.com/Artist06/ReinforcementLearning_Car_Game.git
 cd ReinforcementLearning_Car_Game
 
 Install Dependencies:
