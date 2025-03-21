@@ -593,7 +593,8 @@ def train_loop():
             player(t_playerX, t_playerY, t_angle)
             
             ray_dist=ray_cast(t_playerX, t_playerY, t_angle)
-            writer.writerow([ray_dist[0], ray_dist[1], ray_dist[2], ray_dist[3], ray_dist[4], choice])
+            if(choice!=-1):
+                writer.writerow([ray_dist[0], ray_dist[1], ray_dist[2], ray_dist[3], ray_dist[4], choice])
             file.flush()
 
             score_text = font.render(f"Score: {int(t_distance_covered / 10)}", True, (255, 255, 255))
