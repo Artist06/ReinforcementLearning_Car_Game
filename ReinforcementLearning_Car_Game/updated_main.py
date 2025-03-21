@@ -624,7 +624,7 @@ def train_loop():
             
             ray_dist=ray_cast(t_playerX, t_playerY, t_angle)
             
-            frame_interval = int(1000 / 60 / 10)  
+            frame_interval = int(1000 / 60)  
             accumulated_time = 0
 
             current_time = pygame.time.get_ticks()
