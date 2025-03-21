@@ -616,7 +616,7 @@ def train_loop():
             
             ray_dist=ray_cast(t_playerX, t_playerY, t_angle)
             current_time = pygame.time.get_ticks()
-            if current_time - last_log_time >= 500: 
+            if current_time - last_log_time >= 200: 
                 last_log_time = current_time
                 writer.writerow([ray_dist[0], ray_dist[1], ray_dist[2], ray_dist[3], ray_dist[4], ray_dist[5], ray_dist[6], fchoice, t_player_speed])
                 file.flush()
