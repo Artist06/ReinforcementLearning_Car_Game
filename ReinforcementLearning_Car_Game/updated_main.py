@@ -3,6 +3,7 @@ import math
 import random
 import agent
 import os
+import csv
 from pygame import mixer
 from track import draw_track, TRACK_WIDTH, catmull_rom_chain, generate_track
 
@@ -39,7 +40,7 @@ tree_img = pygame.transform.scale(tree_img, tree_size)
 font = pygame.font.SysFont(None, 50)
 
 # Menu options
-menu_options = ["Start Game", "Agent Mode", "Rules", "Exit"]
+menu_options = ["Start Game", "Agent Mode", "Training Mode", "Rules", "Exit"]
 over_options = ["Restart", "Main Menu", "Exit"]
 current_option = 0
 over_option = 0
@@ -124,6 +125,9 @@ def main_menu():
                     elif menu_options[current_option] == "Exit":
                         menu_running = False
                         return "Exit"
+                    elif menu_options[current_option] == "Training Mode":
+                        menu_running = False
+                        return "Training Mode"
 
         pygame.display.update()
 
@@ -252,6 +256,36 @@ def player(x, y, angle):
     new_rect = rotated_image.get_rect(center=(x + new_width // 2, y + new_height // 2))
     screen.blit(rotated_image, new_rect.topleft)
 
+def sub_ray_cast(x, y, angle):
+    max_length=150
+    length=1
+    xi=0
+    yi=0
+    while length<max_length:
+        xi=int(x-math.sin(math.radians(angle))*length)
+        yi=int(y-math.cos(math.radians(angle))*length)
+        try:
+            clr=screen.get_at((xi,yi))
+            if clr.r==0 and clr.g==170 and clr.b==0:
+                break
+        except IndexError:
+            break
+        length+=1
+    dist=int(math.sqrt((x-xi)**2 + (y-yi)**2))
+    if xi < 0 or xi >= WIDTH or yi < 0 or yi >= HEIGHT:
+        xi = max(0, min(WIDTH - 1, xi))
+        yi = max(0, min(HEIGHT - 1, yi))
+        dist=int(math.sqrt((x-xi)**2 + (y-yi)**2))
+    pygame.draw.line(screen, (255, 255, 255), (x,y), (xi,yi))       #comment to remove rays
+    return dist
+
+def ray_cast(x, y, angle):
+    xc=x+new_width//2
+    yc=y+new_height//2
+    ray_dist=[]
+    for deg in range(-4,1):
+        ray_dist.append(sub_ray_cast(xc, yc, angle+deg*45))
+    return ray_dist
 
 def draw_steering_wheel():
     rotated_wheel = pygame.transform.rotate(steering_wheel_img, -steering_angle)
@@ -273,7 +307,7 @@ def draw_pedals(accelerating, braking):
         screen.blit(brake_img, brake_rect.topleft)
 
 
-def is_within_track(car_rect, inner_points, outer_points):
+def is_within_track(car_rect, inner_points, outer_points, angle):
     def get_distance(point1, point2):
         return math.sqrt((point1[0] - point2[0]) ** 2 + (point1[1] - point2[1]) ** 2)
 
@@ -441,7 +475,7 @@ def game_loop():
             player_rect = rotated_image.get_rect(center=(playerX + new_width // 2, playerY + new_height // 2))
 
             # Check if the car is outside the track
-            if not is_within_track(player_rect, inner_points, outer_points):
+            if not is_within_track(player_rect, inner_points, outer_points, angle):
                 game_over = True
 
             # Prevent player from going out of bounds
@@ -451,7 +485,7 @@ def game_loop():
             player(playerX, playerY, angle)
             for tree_pos in tree_positions:
                 screen.blit(tree_img, tree_pos)
-
+            ray_dist=ray_cast(playerX, playerY, angle)
             score_text = font.render(f"Score: {int(distance_covered / 10)}", True, (255, 255, 255))
             screen.blit(score_text, (WIDTH - 200, 15))
 
@@ -480,7 +514,113 @@ def game_loop():
 
     pygame.quit()
 
+def train_loop():
+    font_size = 30
+    font = pygame.font.Font(None, font_size)
+    file = open("game_data.csv", "w", newline="")  
+    writer=csv.writer(file)
+    if file.tell()==0:
+        writer.writerow(["Dist1", "Dist2", "Dist3", "Dist4", "Dist5", "Choice"])
+        file.flush()
+    t_track_points=[]
+    for i in range(6):
+        if i < 6 // 2:
+            t_track_points.append((random.randint(40 + (i % 3) * 240, 40 + ((i % 3) + 1) * 240),
+                                 40 + random.randint((i // 3) * 250, ((i // 3) + 1) * 250)))
+        else:
+            t_track_points.append((random.randint(40 + (2 - (i % 3)) * 240, 40 + (3 - (i % 3)) * 240),
+                                 50 + random.randint((i // 3) * 250, ((i // 3) + 1) * 250)))
 
+    for i in range(6 // 2):
+        t_track_points.append(t_track_points[i])
+        
+    t_curve_points = catmull_rom_chain(t_track_points, NUM_POINTS)
+    t_outer_points, t_inner_points = generate_track(t_curve_points, TRACK_WIDTH)
+    
+    start_index = 5  
+    t_playerX, t_playerY = (t_outer_points[start_index][0] + t_inner_points[start_index][0]) / 2, \
+                       (t_outer_points[start_index][1] + t_inner_points[start_index][1]) / 2
+
+    nextX, nextY = (t_outer_points[start_index + 1][0] + t_inner_points[start_index + 1][0]) / 2, \
+                   (t_outer_points[start_index + 1][1] + t_inner_points[start_index + 1][1]) / 2
+    t_angle = -math.degrees(math.atan2(nextY - t_playerY, nextX - t_playerX))
+    t_playerX-=new_width//2
+    t_playerY-=new_height//2
+    
+    t_player_speed=0
+    t_rotation_speed=2
+    t_distance_covered=0
+
+    clock = pygame.time.Clock()
+    running = True
+    game_over = False
+    
+    while running:
+        screen.fill((0,170,0))
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running=False
+            elif event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
+                running=False
+        if not game_over:
+            choice=-1
+            draw_track(screen, t_outer_points, t_inner_points, t_curve_points, TRACK_WIDTH)
+            keys=pygame.key.get_pressed()
+            if keys[pygame.K_UP]:
+                choice=3
+                t_player_speed+=0.5
+            if keys[pygame.K_DOWN]:
+                choice=2
+                if t_player_speed-0.5>=10:
+                    t_player_speed-=0.5
+            if keys[pygame.K_LEFT]:
+                choice=0
+                t_angle+=t_rotation_speed
+            if keys[pygame.K_RIGHT]:
+                choice=1
+                t_angle-=t_rotation_speed
+            t_playerX+=t_player_speed*math.cos(math.radians(t_angle))
+            t_playerY-=t_player_speed*math.sin(math.radians(t_angle))
+            if t_player_speed>0:
+                t_distance_covered+=t_player_speed
+                
+            rotated_image=pygame.transform.rotate(playerImg, t_angle)
+            player_rect=rotated_image.get_rect(center=(t_playerX+new_width//2, t_playerY+new_height//2))
+            if not is_within_track(player_rect, t_inner_points, t_outer_points, t_angle):
+                game_over=True            
+            t_playerX = max(0, min(WIDTH - new_width, t_playerX))
+            t_playerY = max(0, min(HEIGHT - new_height, t_playerY))
+            player(t_playerX, t_playerY, t_angle)
+            
+            ray_dist=ray_cast(t_playerX, t_playerY, t_angle)
+            writer.writerow([ray_dist[0], ray_dist[1], ray_dist[2], ray_dist[3], ray_dist[4], choice])
+            file.flush()
+
+            score_text = font.render(f"Score: {int(t_distance_covered / 10)}", True, (255, 255, 255))
+            screen.blit(score_text, (WIDTH - 200, 15))
+        else:
+            #print(os.getcwd())
+            file.close()
+            score = int(t_distance_covered / 10)
+            over = over_screen(score)
+            if over == "Exit":
+                running = False
+                return "Exit"
+            elif over == "Main Menu":
+                running = False
+                return "Main Menu"
+            elif over == "Restart":
+                running = False
+                return "Restart"
+        fps = int(clock.get_fps())
+        fps_text = font.render(f"FPS: {fps}", True, (255, 255, 255))
+        screen.blit(fps_text, (15, 15))
+
+        pygame.display.update()
+        clock.tick()
+    print(os.getcwd())
+    file.close()
+    pygame.quit()
 # Main loop
 if __name__ == "__main__":
     while True:
@@ -492,6 +632,15 @@ if __name__ == "__main__":
             elif game_res == "Main Menu":
                 menu_selection = "New iteration"
             elif game_res == "Exit":
+                menu_selection = "Exit"
+                
+        while menu_selection == "Training Mode":
+            train_res = train_loop()
+            if train_res == "Restart":
+                continue
+            elif train_res == "Main Menu":
+                menu_selection = "New iteration"
+            elif train_res == "Exit":
                 menu_selection = "Exit"
 
         if menu_selection == "Exit":

@@ -48,6 +48,7 @@ class Car:
 
     def draw_radar(self, screen):
         # Optionally Draw All Sensors / Radars
+
         for radar in self.radars:
             position = radar[0]
             pygame.draw.line(screen, (255, 255, 255), self.center, position, 1)
@@ -217,14 +218,14 @@ def run_simulation(genomes, config):
             choice = output.index(max(output))
 
             if choice == 0:
-                car.angle += 10  
+                car.angle += 2
             elif choice == 1:
-                car.angle -= 10  
+                car.angle -= 2
             elif choice == 2:
-                if car.speed - 2 >= 10:
-                    car.speed -= 2  
+                if car.speed - 0.5 >= 10:
+                    car.speed -= 0.5
             else:
-                car.speed += 2  
+                car.speed += 0.5  
 
             # Update car and fitness
             car.update(game_map)
