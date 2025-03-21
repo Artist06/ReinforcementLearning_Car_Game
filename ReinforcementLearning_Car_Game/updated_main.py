@@ -502,7 +502,7 @@ def train_loop():
     last_log_time = pygame.time.get_ticks()
     font_size = 30
     font = pygame.font.Font(None, font_size)
-    file = open("new_game_data.csv", "a", newline="")  
+    file = open("game_data.csv", "a", newline="")  
     writer=csv.writer(file)
     if file.tell()==0:
         writer.writerow(["Dist1", "Dist2", "Dist3", "Dist4", "Dist5", "Dist6", "Dist7", "Choice", "Velocity"])
@@ -554,7 +554,7 @@ def train_loop():
         
         elapsed_time = (pygame.time.get_ticks() - start_time) / 1000  
 
-        if elapsed_time >= 20:  # 20s
+        if elapsed_time >= 40:  # 20s
             game_over = True
         
         if not game_over:
