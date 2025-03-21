@@ -284,7 +284,7 @@ def ray_cast(x, y, angle):
     xc=x+new_width//2
     yc=y+new_height//2
     ray_dist=[]
-    for deg in range(-4,1):
+    for deg in range(-7,1):
         ray_dist.append(sub_ray_cast(xc, yc, angle+deg*45))
     return ray_dist
 
@@ -308,29 +308,13 @@ def draw_pedals(accelerating, braking):
         screen.blit(brake_img, brake_rect.topleft)
 
 
-def is_within_track(car_rect, inner_points, outer_points, angle):
-    def get_distance(point1, point2):
-        return math.sqrt((point1[0] - point2[0]) ** 2 + (point1[1] - point2[1]) ** 2)
+def is_within_track(car_rect, inner_points, outer_points, angle, ray_dist):
+    # Return False if any ray detects a collision (distance == 0)
+    if any(dist <= new_height/2.5 for dist in ray_dist):
+        return False
+    return True
 
-    car_length = car_rect.height // 2
-    angle_rad = math.radians(-angle)
 
-    front_point = (car_rect.centerx + car_length * math.cos(angle_rad),
-                   car_rect.centery + car_length * math.sin(angle_rad))
-    rear_point = (car_rect.centerx - car_length * math.cos(angle_rad),
-                  car_rect.centery - car_length * math.sin(angle_rad))
-
-    for i in range(len(inner_points) - 1):
-        inner_front_dist = get_distance(front_point, inner_points[i])
-        outer_front_dist = get_distance(front_point, outer_points[i])
-        inner_rear_dist = get_distance(rear_point, inner_points[i])
-        outer_rear_dist = get_distance(rear_point, outer_points[i])
-
-        if (inner_front_dist < TRACK_WIDTH and outer_front_dist < TRACK_WIDTH) and \
-                (inner_rear_dist < TRACK_WIDTH and outer_rear_dist < TRACK_WIDTH):
-            return True  # Both front and rear are inside the track
-
-    return False
 
 
 def game_loop():
@@ -476,8 +460,10 @@ def game_loop():
             rotated_image = pygame.transform.rotate(playerImg, angle)
             player_rect = rotated_image.get_rect(center=(playerX + new_width // 2, playerY + new_height // 2))
 
+            
+            ray_dist=ray_cast(playerX, playerY, angle)
             # Check if the car is outside the track
-            if not is_within_track(player_rect, inner_points, outer_points, angle):
+            if not is_within_track(player_rect, inner_points, outer_points, angle, ray_dist):
                 game_over = True
 
             # Prevent player from going out of bounds
@@ -487,7 +473,6 @@ def game_loop():
             player(playerX, playerY, angle)
             for tree_pos in tree_positions:
                 screen.blit(tree_img, tree_pos)
-            ray_dist=ray_cast(playerX, playerY, angle)
             score_text = font.render(f"Score: {int(distance_covered / 10)}", True, (255, 255, 255))
             screen.blit(score_text, (WIDTH - 200, 15))
 
@@ -601,7 +586,7 @@ def train_loop():
                 
             rotated_image=pygame.transform.rotate(playerImg, t_angle)
             player_rect=rotated_image.get_rect(center=(t_playerX+new_width//2, t_playerY+new_height//2))
-            if not is_within_track(player_rect, t_inner_points, t_outer_points, t_angle):
+            if not is_within_track(player_rect, t_inner_points, t_outer_points, t_angle, ray_dist):
                 game_over=True            
             t_playerX = max(0, min(WIDTH - new_width, t_playerX))
             t_playerY = max(0, min(HEIGHT - new_height, t_playerY))
