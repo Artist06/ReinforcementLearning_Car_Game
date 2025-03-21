@@ -359,7 +359,8 @@ def game_loop():
     nextX, nextY = (outer_points[start_index + 1][0] + inner_points[start_index + 1][0]) / 2, \
                    (outer_points[start_index + 1][1] + inner_points[start_index + 1][1]) / 2
     angle = -math.degrees(math.atan2(nextY - playerY, nextX - playerX))
-
+    playerX-=new_width//2
+    playerY-=new_height//2
     player_speed = 0
     acceleration = 0.005
     max_speed = 0.7
