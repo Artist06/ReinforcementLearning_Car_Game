@@ -505,7 +505,7 @@ def train_loop():
     file = open("new_game_data.csv", "w", newline="")  
     writer=csv.writer(file)
     if file.tell()==0:
-        writer.writerow(["Dist1", "Dist2", "Dist3", "Dist4", "Dist5", "Dist6", "Dist7", "Choice"])
+        writer.writerow(["Dist1", "Dist2", "Dist3", "Dist4", "Dist5", "Dist6", "Dist7", "Choice", "Velocity"])
         file.flush()
     t_track_points=[]
     for i in range(6):
@@ -576,6 +576,29 @@ def train_loop():
             if keys[pygame.K_RIGHT]:
                 choice[1]=1
                 t_angle-=t_player_speed*t_rotation_speed
+            fchoice=0
+            if ''.join(map(str, choice))=="0000":      #no movement
+                fchoice=8
+            elif ''.join(map(str, choice))=="0001":    #up
+                fchoice=3
+            elif ''.join(map(str, choice))=="0010":    #down
+                fchoice=2
+            elif ''.join(map(str, choice))=="0100":    #right
+                fchoice=1
+            elif ''.join(map(str, choice))=="1000":   #left
+                fchoice=0
+            elif ''.join(map(str, choice))=="0101":    #up and right
+                fchoice=4
+            elif ''.join(map(str, choice))=="0110":    #down and right
+                fchoice=5
+            elif ''.join(map(str, choice))=="1001":    #up and left
+                fchoice=6
+            elif ''.join(map(str, choice))=="1010":    #down and left"
+                fchoice=7
+            else:
+                fchoice=-1
+
+
             t_playerX+=t_player_speed*math.cos(math.radians(t_angle))
             t_playerY-=t_player_speed*math.sin(math.radians(t_angle))
             if t_player_speed>0:
@@ -595,7 +618,7 @@ def train_loop():
             current_time = pygame.time.get_ticks()
             if current_time - last_log_time >= 500: 
                 last_log_time = current_time
-                writer.writerow([ray_dist[0], ray_dist[1], ray_dist[2], ray_dist[3], ray_dist[4], ray_dist[5], ray_dist[6], choice])
+                writer.writerow([ray_dist[0], ray_dist[1], ray_dist[2], ray_dist[3], ray_dist[4], ray_dist[5], ray_dist[6], fchoice, t_player_speed])
                 file.flush()
 
 
