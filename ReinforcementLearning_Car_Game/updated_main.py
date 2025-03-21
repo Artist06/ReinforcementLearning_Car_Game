@@ -308,14 +308,11 @@ def draw_pedals(accelerating, braking):
         screen.blit(brake_img, brake_rect.topleft)
 
 
-def is_within_track(car_rect, inner_points, outer_points, angle, ray_dist):
+def is_within_track(ray_dist):
     # Return False if any ray detects a collision (distance == 0)
     if any(dist <= new_height/2.5 for dist in ray_dist):
         return False
     return True
-
-
-
 
 def game_loop():
     font_size = 30
@@ -463,7 +460,7 @@ def game_loop():
             
             ray_dist=ray_cast(playerX, playerY, angle)
             # Check if the car is outside the track
-            if not is_within_track(player_rect, inner_points, outer_points, angle, ray_dist):
+            if not is_within_track(ray_dist):
                 game_over = True
 
             # Prevent player from going out of bounds
@@ -508,7 +505,7 @@ def train_loop():
     file = open("new_game_data.csv", "w", newline="")  
     writer=csv.writer(file)
     if file.tell()==0:
-        writer.writerow(["Dist1", "Dist2", "Dist3", "Dist4", "Dist5", "Choice"])
+        writer.writerow(["Dist1", "Dist2", "Dist3", "Dist4", "Dist5", "Dist6", "Dist7", "Choice"])
         file.flush()
     t_track_points=[]
     for i in range(6):
@@ -553,11 +550,11 @@ def train_loop():
             elif event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
                 running=False
         if not game_over:
-            choice=-1
+            choice=[0,0,0,0]
             draw_track(screen, t_outer_points, t_inner_points, t_curve_points, TRACK_WIDTH)
             keys=pygame.key.get_pressed()
             if keys[pygame.K_UP]:
-                choice=3
+                choice[3]=1
                 if(t_player_speed>=max_speed):
                     t_player_speed = max_speed
                 else:
@@ -565,7 +562,7 @@ def train_loop():
             if(keys[pygame.K_UP]==0 and t_player_speed>0):
                 t_player_speed-=0.005
             if keys[pygame.K_DOWN]:
-                choice=2
+                choice[2]=1
                 #if t_player_speed-0.1>=10:
                 if(t_player_speed<=max_rev_speed):
                     t_player_speed = max_rev_speed
@@ -574,19 +571,21 @@ def train_loop():
             if(keys[pygame.K_DOWN]==0 and t_player_speed<0):
                 t_player_speed+=0.005
             if keys[pygame.K_LEFT]:
-                choice=0
+                choice[0]=1
                 t_angle+=t_player_speed*t_rotation_speed
             if keys[pygame.K_RIGHT]:
-                choice=1
+                choice[1]=1
                 t_angle-=t_player_speed*t_rotation_speed
             t_playerX+=t_player_speed*math.cos(math.radians(t_angle))
             t_playerY-=t_player_speed*math.sin(math.radians(t_angle))
             if t_player_speed>0:
                 t_distance_covered+=t_player_speed
                 
+            ray_dist=ray_cast(t_playerX, t_playerY, t_angle)
+
             rotated_image=pygame.transform.rotate(playerImg, t_angle)
             player_rect=rotated_image.get_rect(center=(t_playerX+new_width//2, t_playerY+new_height//2))
-            if not is_within_track(player_rect, t_inner_points, t_outer_points, t_angle, ray_dist):
+            if not is_within_track(ray_dist):
                 game_over=True            
             t_playerX = max(0, min(WIDTH - new_width, t_playerX))
             t_playerY = max(0, min(HEIGHT - new_height, t_playerY))
@@ -596,7 +595,7 @@ def train_loop():
             current_time = pygame.time.get_ticks()
             if current_time - last_log_time >= 500: 
                 last_log_time = current_time
-                writer.writerow([ray_dist[0], ray_dist[1], ray_dist[2], ray_dist[3], ray_dist[4], choice])
+                writer.writerow([ray_dist[0], ray_dist[1], ray_dist[2], ray_dist[3], ray_dist[4], ray_dist[5], ray_dist[6], choice])
                 file.flush()
 
 
