@@ -1,3 +1,4 @@
+from platform import machine
 import pygame
 import math
 import random
@@ -548,7 +549,9 @@ def train_loop():
     t_angle = -math.degrees(math.atan2(nextY - t_playerY, nextX - t_playerX))
     t_playerX-=new_width//2
     t_playerY-=new_height//2
-    
+
+    max_speed = 0.7
+    max_rev_speed = -0.3
     t_player_speed=0
     t_rotation_speed=1
     t_distance_covered=0
@@ -570,17 +573,27 @@ def train_loop():
             keys=pygame.key.get_pressed()
             if keys[pygame.K_UP]:
                 choice=3
-                t_player_speed+=0.01
+                if(t_player_speed>=max_speed):
+                    t_player_speed = max_speed
+                else:
+                    t_player_speed+=0.005
+            if(keys[pygame.K_UP]==0 and t_player_speed>0):
+                t_player_speed-=0.005
             if keys[pygame.K_DOWN]:
                 choice=2
                 #if t_player_speed-0.1>=10:
-                t_player_speed-=0.01
+                if(t_player_speed<=max_rev_speed):
+                    t_player_speed = max_rev_speed
+                else:
+                    t_player_speed-=0.005
+            if(keys[pygame.K_DOWN]==0 and t_player_speed<0):
+                t_player_speed+=0.005
             if keys[pygame.K_LEFT]:
                 choice=0
-                t_angle+=t_rotation_speed
+                t_angle+=t_player_speed*t_rotation_speed
             if keys[pygame.K_RIGHT]:
                 choice=1
-                t_angle-=t_rotation_speed
+                t_angle-=t_player_speed*t_rotation_speed
             t_playerX+=t_player_speed*math.cos(math.radians(t_angle))
             t_playerY-=t_player_speed*math.sin(math.radians(t_angle))
             if t_player_speed>0:
