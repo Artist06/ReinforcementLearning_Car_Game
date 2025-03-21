@@ -516,9 +516,10 @@ def game_loop():
     pygame.quit()
 
 def train_loop():
+    last_log_time = pygame.time.get_ticks()
     font_size = 30
     font = pygame.font.Font(None, font_size)
-    file = open("game_data.csv", "w", newline="")  
+    file = open("new_game_data.csv", "w", newline="")  
     writer=csv.writer(file)
     if file.tell()==0:
         writer.writerow(["Dist1", "Dist2", "Dist3", "Dist4", "Dist5", "Choice"])
@@ -549,7 +550,7 @@ def train_loop():
     t_playerY-=new_height//2
     
     t_player_speed=0
-    t_rotation_speed=2
+    t_rotation_speed=1
     t_distance_covered=0
 
     clock = pygame.time.Clock()
@@ -569,11 +570,11 @@ def train_loop():
             keys=pygame.key.get_pressed()
             if keys[pygame.K_UP]:
                 choice=3
-                t_player_speed+=0.5
+                t_player_speed+=0.01
             if keys[pygame.K_DOWN]:
                 choice=2
-                if t_player_speed-0.5>=10:
-                    t_player_speed-=0.5
+                #if t_player_speed-0.1>=10:
+                t_player_speed-=0.01
             if keys[pygame.K_LEFT]:
                 choice=0
                 t_angle+=t_rotation_speed
@@ -594,9 +595,12 @@ def train_loop():
             player(t_playerX, t_playerY, t_angle)
             
             ray_dist=ray_cast(t_playerX, t_playerY, t_angle)
-            if(choice!=-1):
+            current_time = pygame.time.get_ticks()
+            if current_time - last_log_time >= 500: 
+                last_log_time = current_time
                 writer.writerow([ray_dist[0], ray_dist[1], ray_dist[2], ray_dist[3], ray_dist[4], choice])
-            file.flush()
+                file.flush()
+
 
             score_text = font.render(f"Score: {int(t_distance_covered / 10)}", True, (255, 255, 255))
             screen.blit(score_text, (WIDTH - 200, 15))
