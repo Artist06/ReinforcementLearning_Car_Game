@@ -502,7 +502,7 @@ def train_loop():
     last_log_time = pygame.time.get_ticks()
     font_size = 30
     font = pygame.font.Font(None, font_size)
-    file = open("new_game_data.csv", "w", newline="")  
+    file = open("new_game_data.csv", "a", newline="")  
     writer=csv.writer(file)
     if file.tell()==0:
         writer.writerow(["Dist1", "Dist2", "Dist3", "Dist4", "Dist5", "Dist6", "Dist7", "Choice", "Velocity"])
@@ -542,6 +542,8 @@ def train_loop():
     running = True
     game_over = False
     
+    start_time = pygame.time.get_ticks()
+
     while running:
         screen.fill((0,170,0))
         for event in pygame.event.get():
@@ -549,6 +551,12 @@ def train_loop():
                 running=False
             elif event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
                 running=False
+        
+        elapsed_time = (pygame.time.get_ticks() - start_time) / 1000  
+
+        if elapsed_time >= 20:  # 20s
+            game_over = True
+        
         if not game_over:
             choice=[0,0,0,0]
             draw_track(screen, t_outer_points, t_inner_points, t_curve_points, TRACK_WIDTH)
@@ -615,12 +623,18 @@ def train_loop():
             player(t_playerX, t_playerY, t_angle)
             
             ray_dist=ray_cast(t_playerX, t_playerY, t_angle)
+            
+            frame_interval = int(1000 / 60 / 10)  
+            accumulated_time = 0
+
             current_time = pygame.time.get_ticks()
-            if current_time - last_log_time >= 200: 
-                last_log_time = current_time
+            frame_time = clock.get_time()  
+            accumulated_time += frame_time
+
+            if accumulated_time >= frame_interval:
+                accumulated_time -= frame_interval 
                 writer.writerow([ray_dist[0], ray_dist[1], ray_dist[2], ray_dist[3], ray_dist[4], ray_dist[5], ray_dist[6], fchoice, t_player_speed])
                 file.flush()
-
 
             score_text = font.render(f"Score: {int(t_distance_covered / 10)}", True, (255, 255, 255))
             screen.blit(score_text, (WIDTH - 200, 15))
@@ -643,7 +657,7 @@ def train_loop():
         screen.blit(fps_text, (15, 15))
 
         pygame.display.update()
-        clock.tick()
+        clock.tick(60)
     print(os.getcwd())
     file.close()
     pygame.quit()
