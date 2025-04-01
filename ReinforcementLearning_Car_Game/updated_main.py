@@ -2,11 +2,14 @@ from platform import machine
 import pygame
 import math
 import random
-import agent
+#import agent
 import os
 import csv
 from pygame import mixer
 from track import draw_track, TRACK_WIDTH, catmull_rom_chain, generate_track
+import tensorflow as tf
+from tensorflow import keras
+import numpy as np
 
 pygame.init()
 mixer.init()
@@ -16,25 +19,25 @@ WIDTH, HEIGHT = 800, 600
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("Track Invaders")
 
-icon = pygame.image.load('images/racing.png')
+icon = pygame.image.load('./images/racing.png')
 pygame.display.set_icon(icon)
     
-playerImg = pygame.image.load('images/racing-car.png')
+playerImg = pygame.image.load('./images/racing-car.png')
 new_width = 48
 new_height = int((new_width / playerImg.get_width()) * playerImg.get_height())
 playerImg = pygame.transform.scale(playerImg, (new_width, new_height))
 
-steering_wheel_img = pygame.image.load('images/steering-wheel.png')
+steering_wheel_img = pygame.image.load('./images/steering-wheel.png')
 steering_wheel_img = pygame.transform.scale(steering_wheel_img, (150, 150))
 
 pedal_size = (80, 80)
-accelerator_img = pygame.transform.scale(pygame.image.load('images/brake.png'), pedal_size)
-brake_img = pygame.transform.scale(pygame.image.load('images/accelerator.png'), pedal_size)
+accelerator_img = pygame.transform.scale(pygame.image.load('./images/brake.png'), pedal_size)
+brake_img = pygame.transform.scale(pygame.image.load('./images/accelerator.png'), pedal_size)
 
 accelerator_rect = accelerator_img.get_rect(bottomleft=(50, HEIGHT - 20))
 brake_rect = brake_img.get_rect(bottomleft=(150, HEIGHT - 20))
 
-tree_img = pygame.image.load('images/grass.png')
+tree_img = pygame.image.load('./images/grass.png')
 tree_size = (50, 50)
 tree_img = pygame.transform.scale(tree_img, tree_size)
 
@@ -115,8 +118,9 @@ def main_menu():
                     if menu_options[current_option] == "Start Game":
                         return "Start Game"
                     elif menu_options[current_option] == "Agent Mode":
-                        save_track_image() 
-                        os.system("python ReinforcementLearning_Car_Game/agent.py")  
+                        #save_track_image() 
+                        #os.system("agent.py") 
+                        return "Agent Mode" 
 
                     elif menu_options[current_option] == "Rules":
                         rule_return = rules_menu()
@@ -314,6 +318,187 @@ def is_within_track(ray_dist):
         return False
     return True
 
+def agent_game_loop():
+    font_size = 30
+    font = pygame.font.Font(None, font_size)
+    global playerX, playerY, angle, player_speed, steering_angle, distance_covered, track_points, curve_points, outer_points, inner_points, num_trees
+
+    track_points = []
+    for i in range(6):
+        if i < 6 // 2:
+            track_points.append((random.randint(40 + (i % 3) * 240, 40 + ((i % 3) + 1) * 240),
+                                 40 + random.randint((i // 3) * 250, ((i // 3) + 1) * 250)))
+        else:
+            track_points.append((random.randint(40 + (2 - (i % 3)) * 240, 40 + (3 - (i % 3)) * 240),
+                                 50 + random.randint((i // 3) * 250, ((i // 3) + 1) * 250)))
+
+    for i in range(6 // 2):
+        track_points.append(track_points[i])
+
+    curve_points = catmull_rom_chain(track_points, NUM_POINTS)
+    outer_points, inner_points = generate_track(curve_points, TRACK_WIDTH)
+
+    start_index = 5  # Move a few points forward to avoid track boundary issues
+    playerX, playerY = (outer_points[start_index][0] + inner_points[start_index][0]) / 2, \
+                       (outer_points[start_index][1] + inner_points[start_index][1]) / 2
+
+    nextX, nextY = (outer_points[start_index + 1][0] + inner_points[start_index + 1][0]) / 2, \
+                   (outer_points[start_index + 1][1] + inner_points[start_index + 1][1]) / 2
+    angle = -math.degrees(math.atan2(nextY - playerY, nextX - playerX))
+    playerX-=new_width//2
+    playerY-=new_height//2
+    player_speed = 0.7
+    acceleration = 0.02
+    max_speed = 3
+    friction = 0.005
+    reverse_speed = -0.3
+    rotation_speed = 3
+
+    steering_angle = 0
+    steering_sensitivity = 4
+    steering_return_speed = 2
+    distance_covered = 0
+
+    tree_positions = generate_tree_positions(10, outer_points, tree_size, min_distance=100)
+
+    clock = pygame.time.Clock()
+    running = True
+    game_over = False
+    engine_start_once = True
+    engine_event = pygame.USEREVENT + 1  # delay for engine sound
+    pygame.time.set_timer(engine_event, 2000)
+
+    # loading sounds
+    engine_sound = mixer.Sound("sounds/engine.mp3")
+    engine_start_sound = mixer.Sound("sounds/engine_start.wav")
+
+    agentmodel=keras.models.load_model("ReinforcementLearning_Car_Game-master/ReinforcementLearning_Car_Game/agentmodel.keras")
+
+    while running:
+        screen.fill((0, 170, 0))
+        if engine_start_once:  # engine starts once
+            engine_start_sound.play()
+            engine_start_once = False
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
+            elif event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
+                running = False
+            if event.type == engine_event:  # engine sound starts playing
+                engine_sound.play(-1)
+
+        if not game_over:
+            draw_track(screen, outer_points, inner_points, curve_points, TRACK_WIDTH)
+            ray_dist=ray_cast(playerX,playerY,angle)[:7]
+            #ray_dist.append(player_speed)
+            ray_dist=np.asarray(ray_dist).astype("float32")
+            
+            key=0
+            maxval=0
+            keyarray=agentmodel.predict( np.asarray([ray_dist]),verbose=0)[0]
+
+            for i,val in enumerate(keyarray):
+
+                if(val>maxval):
+                    maxval=val
+                    key=i
+            key-=1
+            #accelerating = key[pygame.K_UP]
+            #braking = key[pygame.K_DOWN]
+
+            if key==3:
+                if player_speed < 0:
+                    player_speed += friction
+                else:
+                    player_speed += acceleration
+                    if player_speed > max_speed:
+                        player_speed = max_speed
+            elif key==2:
+                if player_speed > 0:
+                    player_speed -= friction
+                else:
+                    player_speed -= acceleration
+                    if player_speed < reverse_speed:
+                        player_speed = reverse_speed
+            else:
+                if player_speed > 0:
+                    player_speed -= friction
+                elif player_speed < 0:
+                    player_speed += friction
+                if abs(player_speed) < friction:
+                    player_speed = 0
+
+            if player_speed != 0:  # Rotation only when moving
+                direction = 1 if player_speed > 0 else -1  # Reverse rotation when moving backward
+                if key==6:
+                    angle += rotation_speed * direction
+                if key==4:
+                    angle -= rotation_speed * direction
+
+            if key==0:
+                steering_angle = max(steering_angle - steering_sensitivity, -30)
+            if key==1:
+                steering_angle = min(steering_angle + steering_sensitivity, 30)
+
+            if not key==0 and not key==1:
+                if steering_angle > 0:
+                    steering_angle = max(steering_angle - steering_return_speed, 0)
+                elif steering_angle < 0:
+                    steering_angle = min(steering_angle + steering_return_speed, 0)
+
+            playerX += player_speed * math.cos(math.radians(-angle))
+            playerY += player_speed * math.sin(math.radians(-angle))
+
+            if player_speed > 0:  # Moving forward
+                distance_covered += player_speed
+            elif player_speed < 0:  # Moving backward
+                if (distance_covered >= 0):
+                    distance_covered += player_speed
+                else:
+                    distance_covered = 0
+
+            rotated_image = pygame.transform.rotate(playerImg, angle)
+            player_rect = rotated_image.get_rect(center=(playerX + new_width // 2, playerY + new_height // 2))
+
+            
+            # Check if the car is outside the track
+           
+
+            # Prevent player from going out of bounds
+            playerX = max(0, min(WIDTH - new_width, playerX))
+            playerY = max(0, min(HEIGHT - new_height, playerY))
+
+            player(playerX, playerY, angle)
+            for tree_pos in tree_positions:
+                screen.blit(tree_img, tree_pos)
+            score_text = font.render(f"Score: {int(distance_covered / 10)}", True, (255, 255, 255))
+            screen.blit(score_text, (WIDTH - 200, 15))
+
+            draw_steering_wheel()
+            #draw_pedals(accelerating, braking)
+
+        else:
+            engine_sound.stop()  # engine sound stops
+            score = int(distance_covered / 10)
+            over = over_screen(score)
+            if over == "Exit":
+                running = False
+                return "Exit"
+            elif over == "Main Menu":
+                running = False
+                return "Main Menu"
+            elif over == "Restart":
+                running = False
+                return "Restart"
+        fps = int(clock.get_fps())
+        fps_text = font.render(f"FPS: {fps}", True, (255, 255, 255))
+        screen.blit(fps_text, (15, 15))
+
+        pygame.display.update()
+        clock.tick()
+
+    pygame.quit()
+
 def game_loop():
     font_size = 30
     font = pygame.font.Font(None, font_size)
@@ -365,8 +550,8 @@ def game_loop():
     pygame.time.set_timer(engine_event, 2000)
 
     # loading sounds
-    engine_sound = mixer.Sound("sounds/engine.mp3")
-    engine_start_sound = mixer.Sound("sounds/engine_start.wav")
+    engine_sound = mixer.Sound("../sounds/engine.mp3")
+    engine_start_sound = mixer.Sound("../sounds/engine_start.wav")
 
     def save_track_image():
         screen.fill((0, 170, 0))  # Green background
@@ -673,7 +858,16 @@ if __name__ == "__main__":
                 menu_selection = "New iteration"
             elif game_res == "Exit":
                 menu_selection = "Exit"
-                
+
+        while menu_selection == "Agent Mode":
+            game_res = agent_game_loop()
+            if game_res == "Restart":
+                continue
+            elif game_res == "Main Menu":
+                menu_selection = "New iteration"
+            elif game_res == "Exit":
+                menu_selection = "Exit"        
+        
         while menu_selection == "Training Mode":
             train_res = train_loop()
             if train_res == "Restart":
