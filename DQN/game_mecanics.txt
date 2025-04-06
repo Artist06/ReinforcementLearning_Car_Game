@@ -1,0 +1,173 @@
+Game Mechanics Documentation
+
+This document provides an overview of the mechanics, parameters, and functionality of the car game.
+
+---
+
+1. Initialization Parameters
+
+Player Position and Orientation
+- playerX and playerY:
+  The initial position of the car is calculated as the midpoint between the outer_points and inner_points of the track at the start_index.
+  playerX, playerY = (outer_points[start_index][0] + inner_points[start_index][0]) / 2, \
+                     (outer_points[start_index][1] + inner_points[start_index][1]) / 2
+
+- nextX and nextY:
+  The next target position on the track, used to calculate the car's initial angle.
+  nextX, nextY = (outer_points[start_index + 1][0] + inner_points[start_index + 1][0]) / 2, \
+                 (outer_points[start_index + 1][1] + inner_points[start_index + 1][1]) / 2
+
+- angle:
+  The initial orientation of the car, calculated using the arctangent of the difference between the current and next positions.
+  angle = -math.degrees(math.atan2(nextY - playerY, nextX - playerX))
+
+---
+
+Physics Parameters
+- player_speed:
+  The current speed of the car.
+  player_speed = 0
+
+- acceleration:
+  The rate of acceleration when the car moves forward.
+  acceleration = 0.005
+
+- max_speed:
+  The maximum forward speed of the car.
+  max_speed = 0.7
+
+- friction:
+  The rate at which the car slows down when no action is taken.
+  friction = 0.005
+
+- reverse_speed:
+  The maximum reverse speed of the car.
+  reverse_speed = -0.3
+
+- rotation_speed:
+  The rate at which the car rotates when turning.
+  rotation_speed = 0.8
+
+---
+
+Steering Parameters
+- steering_angle:
+  The current angle of the steering wheel.
+  steering_angle = 0
+
+- steering_sensitivity:
+  The rate at which the steering angle changes when turning.
+  steering_sensitivity = 4
+
+- steering_return_speed:
+  The rate at which the steering wheel returns to the center when no turning action is taken.
+  steering_return_speed = 2
+
+---
+
+Gameplay Parameters
+- distance_covered:
+  Tracks the total distance covered by the car.
+  distance_covered = 0
+
+---
+
+2. Game Mechanics
+
+Movement
+- The car's position is updated based on its speed and angle:
+  playerX += player_speed * math.cos(math.radians(-angle))
+  playerY += player_speed * math.sin(math.radians(-angle))
+
+- Speed is updated based on acceleration, braking, and friction:
+  if accelerating:
+      player_speed += acceleration
+      if player_speed > max_speed:
+          player_speed = max_speed
+  elif braking:
+      player_speed -= acceleration
+      if player_speed < reverse_speed:
+          player_speed = reverse_speed
+  else:
+      if player_speed > 0:
+          player_speed -= friction
+      elif player_speed < 0:
+          player_speed += friction
+      if abs(player_speed) < friction:
+          player_speed = 0
+
+---
+
+Steering
+- The car rotates only when it is moving:
+  if player_speed != 0:
+      if keys[pygame.K_LEFT]:
+          angle += rotation_speed
+      if keys[pygame.K_RIGHT]:
+          angle -= rotation_speed
+
+- The steering wheel rotates based on the LEFT and RIGHT actions:
+  if keys[pygame.K_LEFT]:
+      steering_angle = max(steering_angle - steering_sensitivity, -30)
+  if keys[pygame.K_RIGHT]:
+      steering_angle = min(steering_angle + steering_sensitivity, 30)
+
+- The steering wheel gradually returns to the center:
+  if not keys[pygame.K_LEFT] and not keys[pygame.K_RIGHT]:
+      if steering_angle > 0:
+          steering_angle = max(steering_angle - steering_return_speed, 0)
+      elif steering_angle < 0:
+          steering_angle = min(steering_angle + steering_return_speed, 0)
+
+---
+
+Collision Detection
+- Ray-cast distances are used to detect collisions with track boundaries:
+  ray_dist = ray_cast(playerX, playerY, angle)
+  if not is_within_track(ray_dist):
+      game_over = True
+
+---
+
+Scoring
+- The score is based on the distance covered:
+  score_text = font.render(f"Score: {int(distance_covered / 10)}", True, (255, 255, 255))
+
+---
+
+3. Replay Buffer Integration
+
+Adding Experiences
+- Each experience includes:
+  - current_state: Ray-cast distances before the action.
+  - action: The action taken by the agent.
+  - new_state: Ray-cast distances after the action.
+  - reward: The reward received for the action.
+  - terminated: Whether the car went off-track.
+
+- Example:
+  current_state = ray_dist
+  new_state = ray_cast(playerX, playerY, angle)
+  reward = calculate_reward(ray_dist, is_within_track(ray_dist), distance_covered, player_speed, angle)
+  terminated = not is_within_track(ray_dist)
+  replay_buffer.add(current_state, action, new_state, reward, terminated)
+
+---
+
+4. Actions
+
+The car can perform the following actions:
+
+Action         | Description
+---------------|------------------------------------------
+Action.UP      | Accelerate forward.
+Action.DOWN    | Brake or reverse.
+Action.LEFT    | Steer left.
+Action.RIGHT   | Steer right.
+Action.UP_LEFT | Accelerate forward and steer left.
+Action.UP_RIGHT| Accelerate forward and steer right.
+Action.DOWN_LEFT| Brake/reverse and steer left.
+Action.DOWN_RIGHT| Brake/reverse and steer right.
+Action.IDLE    | No movement (the car remains stationary).
+
+---

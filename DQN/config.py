@@ -1,0 +1,36 @@
+import os
+
+# Window settings
+WIDTH = 800
+HEIGHT = 600
+
+# Track settings
+TRACK_WIDTH = 100
+NUM_TRACK_POINTS = 6
+NUM_CURVE_POINTS = 100
+
+# Car settings
+CAR_LENGTH = 48
+CAR_WIDTH = 24
+MAX_SPEED = 0.5
+MIN_SPEED = -0.2
+ACCELERATION = 0.002
+FRICTION = 0.001
+ROTATION_SPEED = 0.5
+
+# Training settings
+BATCH_SIZE = 128
+EPISODES = 1000
+RENDER_EVERY = 10
+MIN_STEPS = 50
+REPLAY_MEMORY_SIZE = 10000
+GAMMA = 0.95
+EPSILON_START = 1.0
+EPSILON_MIN = 0.05
+EPSILON_DECAY = 0.998
+LEARNING_RATE = 0.001
+
+# Paths
+MODEL_DIR = "models"
+LOG_FILE = "training_log.csv"
+os.makedirs(MODEL_DIR, exist_ok=True)
