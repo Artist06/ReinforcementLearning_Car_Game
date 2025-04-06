@@ -80,7 +80,7 @@ pip install -r requirements.txt
 5. Run the game:
 
 ```bash
-python main.py
+python updated_main.py
 ```
 
 ## Controls
