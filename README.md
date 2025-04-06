@@ -51,8 +51,8 @@ In the Play Game option, user can play using arrow keys.
 
 Game Graphics::
 
-![image alt](https://github.com/01prakash-aditya/ReinforcementLearning_Car_Game/blob/3836521decd3bc0d459c073066d1922895d19d7d/main_menu.png)
+![image alt](main_menu.png)
 
-![image alt](https://github.com/01prakash-aditya/ReinforcementLearning_Car_Game/blob/3836521decd3bc0d459c073066d1922895d19d7d/rules_page.png)
+![image alt](rules_page.png)
 
-![image alt](https://github.com/01prakash-aditya/ReinforcementLearning_Car_Game/blob/3836521decd3bc0d459c073066d1922895d19d7d/agent_frame.png)
+![image alt](agent_frame.png)
