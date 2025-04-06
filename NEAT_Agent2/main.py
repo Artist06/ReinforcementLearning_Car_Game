@@ -52,23 +52,42 @@ def draw_text(text, font, color, surface, x, y):
     text_rect = text_obj.get_rect(center=(x, y))
     surface.blit(text_obj, text_rect)
 
+def angle_between(A, B, C):
+    BA_x, BA_y = A[0] - B[0], A[1] - B[1]
+    BC_x, BC_y = C[0] - B[0], C[1] - B[1]
+    dot_product = BA_x * BC_x + BA_y * BC_y
+    norm_BA = math.sqrt(BA_x**2 + BA_y**2)
+    norm_BC = math.sqrt(BC_x**2 + BC_y**2)
+    cos_theta = dot_product / (norm_BA * norm_BC)
+    theta = math.acos(max(-1, min(1, cos_theta))) 
+    return math.degrees(theta)
 
 def save_track_image():
     screen.fill((0, 170, 0))  # Green background
 
     # Generate track points similar to game loop
     track_points = []
-    for i in range(6):
-        if i < 6 // 2:
-            track_points.append((random.randint(40 + (i % 3) * 240, 40 + ((i % 3) + 1) * 240),
-                                 40 + random.randint((i // 3) * 250, ((i // 3) + 1) * 250)))
-        else:
-            track_points.append((random.randint(40 + (2 - (i % 3)) * 240, 40 + (3 - (i % 3)) * 240),
-                                 50 + random.randint((i // 3) * 250, ((i // 3) + 1) * 250)))
-
+    done=1
+    while(done==1):
+        for i in range(6):
+            if i < 6 // 2:
+                track_points.append((random.randint(40 + (i % 3) * 240, 40 + ((i % 3) + 1) * 240),
+                                     40 + random.randint((i // 3) * 250, ((i // 3) + 1) * 250)))
+            else:
+                track_points.append((random.randint(40 + (2 - (i % 3)) * 240, 40 + (3 - (i % 3)) * 240),
+                                     50 + random.randint((i // 3) * 250, ((i // 3) + 1) * 250)))
+        done=0
+        for i in range(6):
+            A=track_points[i%6]
+            B=track_points[(i+1)%6]
+            C=track_points[(i+2)%6]
+            if angle_between(A, B, C)<=90:
+                done=1
+                track_points=[]
+                break
+        
     for i in range(6 // 2):
-        track_points.append(track_points[i])  # Close the loop
-
+        track_points.append(track_points[i])
     # Generate curve points and track
     curve_points = catmull_rom_chain(track_points, NUM_POINTS)
     outer_points, inner_points = generate_track(curve_points, TRACK_WIDTH)
