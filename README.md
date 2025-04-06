@@ -3,7 +3,7 @@ Reinforcement Learning Car Game
 This repository contains a reinforcement learning-based car game developed in Python. The game leverages reinforcement
 learning algorithms to enable a car to autonomously navigate through a track, learning optimal driving strategies over time.
 
-![image alt](https://github.com/01prakash-aditya/ReinforcementLearning_Car_Game/blob/3836521decd3bc0d459c073066d1922895d19d7d/player_frame.png)
+![image alt](player_frame.png)
 
 Features
 
