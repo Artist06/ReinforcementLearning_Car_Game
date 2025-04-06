@@ -358,8 +358,6 @@ def agent_game_loop():
     steering_return_speed = 2
     distance_covered = 0
 
-    tree_positions = generate_tree_positions(10, outer_points, tree_size, min_distance=100)
-
     clock = pygame.time.Clock()
     running = True
     game_over = False
@@ -389,7 +387,7 @@ def agent_game_loop():
         if not game_over:
             draw_track(screen, outer_points, inner_points, curve_points, TRACK_WIDTH)
             ray_dist=ray_cast(playerX,playerY,angle)[:7]
-            #ray_dist.append(player_speed)
+           
             ray_dist=np.asarray(ray_dist).astype("float32")
             
             key=0
@@ -402,9 +400,7 @@ def agent_game_loop():
                     maxval=val
                     key=i
             key-=1
-            #accelerating = key[pygame.K_UP]
-            #braking = key[pygame.K_DOWN]
-
+            
             if key==3:
                 if player_speed < 0:
                     player_speed += friction
@@ -468,13 +464,8 @@ def agent_game_loop():
             playerY = max(0, min(HEIGHT - new_height, playerY))
 
             player(playerX, playerY, angle)
-            for tree_pos in tree_positions:
-                screen.blit(tree_img, tree_pos)
             score_text = font.render(f"Score: {int(distance_covered / 10)}", True, (255, 255, 255))
             screen.blit(score_text, (WIDTH - 200, 15))
-
-            draw_steering_wheel()
-            #draw_pedals(accelerating, braking)
 
         else:
             engine_sound.stop()  # engine sound stops
