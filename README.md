@@ -1,80 +1,103 @@
-Reinforcement Learning Car Game
+# Reinforcement Learning Car Game
 
-This repository contains a reinforcement learning-based car game developed in Python. The game leverages reinforcement
-learning algorithms to enable a car to autonomously navigate through a track, learning optimal driving strategies over time.
-We have implemented 3 different techniques for this:
-1.DeepQ Learning
-2.NeuroEvolution of Augmenting Topologies(NEAT)
-3.XGBoost(with keras)
+A Python-based car game that implements various reinforcement learning algorithms to enable autonomous driving. The project demonstrates three different machine learning techniques:
 
-![image alt](player_frame.png)
+1. Deep Q-Learning (DQN)
+2. NeuroEvolution of Augmenting Topologies (NEAT)
+3. XGBoost with Keras
 
-Features
+![Game Screenshot](player_frame.png)
 
-Autonomous Driving: The car learns to drive itself using 3 different technqiues.
+## Features
 
-Customizable Tracks: Users can design and modify tracks to test the car's learning adaptability.
+- **Autonomous Driving**: Self-learning car using three different AI techniques
+- **Customizable Tracks**: Design and modify tracks to test learning adaptability
+- **Performance Metrics**: Monitor learning progress and performance
 
-Performance Metrics: Track the car's learning progress and performance over time.
+## Project Structure
 
-Folders:
+The project is organized into four main folders:
 
-4 separate folders are created.
+### 1. Main_Game
 
-1.Main_Game:
-  This contains only basic game which is used as an environment for the agent. User can play this game in order to judge the environment (this can be done in other agent folders well).
+- Basic game environment for testing and player interaction
+- Serves as the foundation for all AI implementations
 
-2.DQN_Agent1;
+### 2. DQN
 
+- Implementation of Dueling Deep Q-Network
+- Features actor-critic model architecture
+- Includes extensive replay buffer system
 
-3.NEAT_Agent2:
-  This contains implementations of NEAT algorithm. Under agent mode in main menu , results of the neat algorithm can be seen.
+### 3. NEAT_Agent2
 
-4.XGBoost_Agent3:
-  This contains XGBoost implementation. Apart from the agent results, it also contains training mode in which user can play and generate the training data for training the model furthur.
+- NEAT algorithm implementation
+- View results through agent mode in main menu
 
-Installation:: 
+### 4. XGBoost_Agent3
 
-Clone the Repository:
+- XGBoost implementation with Keras
+- Includes training mode for data generation
+- Allows user gameplay for model training
 
+## Installation
+
+1. Clone the repository:
+
+```bash
 git clone https://github.com/Artist06/ReinforcementLearning_Car_Game.git
 cd ReinforcementLearning_Car_Game
+```
 
-create a python enivronment (preferred)
+2. Create a Python environment (recommended):
 
-1.Using anaconda 
+Option A: Using Anaconda
 
-  conda create -p venv python==3.12
-  conda activate path(shown after creation of env)
+```bash
+conda create -p venv python==3.12
+conda activate ./venv
+```
 
-2.python -m venv env_name
-  env_name\scripts\activate
+Option B: Using venv
 
+```bash
+python -m venv env_name
+env_name\Scripts\activate
+```
 
+3. Navigate to desired implementation:
 
-Folder name should be any of the four folders described above.
-cd folder_name
+```bash
+cd <folder_name>  # Main_Game, DQN, NEAT_Agent2, or XGBoost_Agent3
+```
 
-Install Dependencies:
+4. Install dependencies:
 
+```bash
 pip install -r requirements.txt
+```
 
-Run the game:
+5. Run the game:
 
+```bash
 python main.py
+```
 
-PLAY THE GAME!!!!
-ENJOY THE AGENT PLAY GAME!!
+## Controls
 
-Controls
+- **Agent Mode**: AI operates autonomously using sensor inputs
+- **Player Mode**: Use arrow keys for manual control
 
-The agent runs autonomously, adjusting direction based on sensor input.
-In the Play Game option, user can play using arrow keys.
+## Screenshots
 
-Game Graphics::
+### Main Menu
 
-![image alt](main_menu.png)
+![Main Menu](main_menu.png)
 
-![image alt](rules_page.png)
+### Rules Page
 
-![image alt](agent_frame.png)
+![Rules Page](rules_page.png)
+
+### Agent in Action
+
+![Agent Gameplay](agent_frame.png)
