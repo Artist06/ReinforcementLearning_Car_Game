@@ -18,7 +18,9 @@ Customizable Tracks: Users can design and modify tracks to test the car's learni
 Performance Metrics: Track the car's learning progress and performance over time.
 
 Folders:
+
 4 separate folders are created.
+
 1.Main_Game:
   This contains only basic game which is used as an environment for the agent. User can play this game in order to judge the environment (this can be done in other agent folders well).
 
@@ -39,7 +41,9 @@ git clone https://github.com/Artist06/ReinforcementLearning_Car_Game.git
 cd ReinforcementLearning_Car_Game
 
 create a python enivronment (preferred)
+
 1.Using anaconda 
+
   conda create -p venv python==3.12
   conda activate path(shown after creation of env)
 
