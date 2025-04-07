@@ -81,7 +81,7 @@ def save_track_image():
             A=track_points[i%6]
             B=track_points[(i+1)%6]
             C=track_points[(i+2)%6]
-            if angle_between(A, B, C)<=90:
+            if angle_between(A, B, C)<=90: # less sharper edges
                 done=1
                 track_points=[]
                 break
