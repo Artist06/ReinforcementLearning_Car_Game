@@ -1,4 +1,5 @@
 from platform import machine
+import sys
 import pygame
 import math
 import random
@@ -780,7 +781,7 @@ def dqn_agent_mode():
         normalized_state = (state_tensor - state_tensor.mean()) / (state_tensor.std() + 1e-8)
         
         with torch.no_grad():
-            # Simulate model latency and computation variance
+            
             if random.random() < 0.02:  # 2% chance of delayed response
                 value_estimate = torch.sum(normalized_state) * 0.08
             else:
@@ -810,7 +811,6 @@ def dqn_agent_mode():
                 action_probs = torch.softmax(synthetic_q[:2], dim=0)
                 return (random.random() > 0.5, 0.5 + float(torch.sigmoid(torch.tensor(random.random())).item()) * 0.5)
             else:
-                # Exploit learned policy with environmental factors
                 if abs(angle_diff) > 3:
                     synthetic_q[0] = angle_diff * 0.1 * visibility_factor
                     synthetic_q[1] = -angle_diff * 0.1 * visibility_factor
@@ -875,7 +875,7 @@ def dqn_agent_mode():
             for tree_pos in tree_positions:
                 screen.blit(tree_img, tree_pos)
 
-            # Only show score, matching other game modes
+
             score_text = font.render(f"Score: {int(distance_covered / 10)}", True, (255, 255, 255))
             screen.blit(score_text, (WIDTH - 200, 15))
 
@@ -975,3 +975,4 @@ if __name__ == "__main__":
     finally:
         pygame.font.quit()  # Properly cleanup font module
         pygame.quit()
+        sys.exit()

@@ -127,4 +127,8 @@ def calculate_reward(ray_distances, is_within_track, distance_covered, speed, an
         smoothness = sum(abs(ray_distances[i] - ray_distances[i-1]) for i in range(1, len(ray_distances)))
         reward -= (smoothness / len(ray_distances)) * 0.01
     
+    # Penalty for sharp angles
+    angle_penalty = abs(angle) * 0.5  # Increase penalty factor for larger angles
+    reward -= angle_penalty
+    
     return reward
