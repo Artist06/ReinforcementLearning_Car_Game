@@ -31,6 +31,7 @@ This Python code implements a car racing game using the Pygame library. The game
 2. Place all the images and sounds in the appropriate folders.
 3. Run the script `updated_main.py`.
 4. Use the main menu to navigate and select game modes.
+   (Main DQN Code : DQN_Agent.py
 
 ## Controls
 
