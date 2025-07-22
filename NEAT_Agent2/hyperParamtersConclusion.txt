@@ -1,0 +1,180 @@
+[NEAT]
+
+fitness_criterion     = max   
+#termination condition , when best genome fitness(max fitness) >= target fitness
+#other conditions min(want all solutions to be good) , mean(want overall improvement not just one lucky) , max(atleast one great solution)
+#max coz we need to work toward like the best solution there will be like many solution which are not good due to randomness
+#so mean will decrease automatically so its not preferred
+
+fitness_threshold     = 100000000
+#threshold value above which we consider model as success
+#till which value we will stop
+
+pop_size              = 100
+#no of individuals in each generation preferred about 100 good start point in case of complex tracks
+#simpler tracks simply use small nos like 10 will work as well
+#for understanding purposes can go with 5 like if we wish to track each one
+#larger size explores better but increases training time
+
+reset_on_extinction   = True
+#a new random population is created if all species are removed due to stagnation(species hasn't improved over the no of generations)
+#avoids crashes in case all species dies useful like early in evolution when network is poor
+#since we are on game and wants to keep on trying so we keep it true
+#in case of research and all we set this to false
+
+
+
+[DefaultGenome]
+# node activation options
+activation_default      = tanh #we are taking this as tanh not relu to avoid the leaky relu problems
+#tanh is also 0 centered so its better to work with
+#also we will have like less layers so sturating (vanishing gradient problem will not be there)
+#sigmoid 
+#tanh
+#ReLu 
+activation_mutate_rate  = 0.02 #prob that nodes activation function will be mutated we try to keep it little stable
+activation_options      = tanh ReLu 
+#can configure leaky reLu by ourselves as well
+
+# node aggregation options
+#it refers to aggregation function on how each node combines its input using aggregation function
+#op = activation(aggregation(w1x1 , w2,x2 ,...) + bias)
+aggregation_default     = sum  #traditional behaviour
+aggregation_mutate_rate = 0.01 
+aggregation_options     = sum
+
+# node bias options
+#bias adds flexibitliy in the network
+bias_init_mean          = 0.1 #initally we wish to keep bias as 0.1 sufficiently large good even if we use realy func
+bias_init_stdev         = 1.0
+bias_max_value          = 30.0
+bias_min_value          = -30.0
+bias_mutate_power       = 0.5 
+bias_mutate_rate        = 0.6 # we allow bias to change much
+bias_replace_rate       = 0.1 
+
+# genome compatibility options
+#genomic distance formula wts option options
+compatibility_disjoint_coefficient = 2.0  #wts of the disjoint and excess genes
+#higher value : more sensitive to the topological difference(strucutre) 
+#inc when we wish species to be strucutrally difference 
+#favours many diverse structure early on helping in evolution
+
+compatibility_weight_coefficient   = 0.5 #wt of the avg wt diff of the matching genes
+
+# connection add/remove rates
+conn_add_prob           = 0.5
+conn_delete_prob        = 0.5
+#diversity inc
+
+# connection enable options
+enabled_default         = True  #initally connections are enabled (genotype)
+enabled_mutate_rate     = 0.01  #prob of switching in mutation #keeping it low since we want our connection to be enabled
+#we can infact play with weights later on
+
+feed_forward            = True #we dont wish recurrent network like we are not doing something as time series like next op dep on prev one
+#all actions are only dependent on the current state irrespective of the previous actions #markov
+#no cycles no memory and feedback
+initial_connection      = full
+#connect all ips with output initally
+#this results in quick learining with little wiring
+
+# node add/remove rates
+
+node_add_prob           = 0.2 #0.2 is decent
+node_delete_prob        = 0.2
+
+# network parameters
+num_hidden              = 0 #starting small allowing network to evolve by itself
+num_inputs              = 5 #inputs are 5 sensors based distances
+num_outputs             = 4 #ops are 4 rotate 2deg left , 2deg right , dec speed by 0.5 , inc speed by 0.5
+
+# node response options
+#response multiplier-> how sensitive a node is to its total num_inputs
+#op = activation(respose * total_input) 
+#we dont focus much on this one we always keep this 1 as mean and overall const value with no mutation
+response_init_mean      = 1.0
+response_init_stdev     = 0.0
+response_max_value      = 30.0
+response_min_value      = -30.0
+response_mutate_power   = 0.0
+response_mutate_rate    = 0.0
+response_replace_rate   = 0.0
+
+# connection weight options
+#these are the weight options of the linkage (genotype : connection gene characteristic , phenotype : wt of the neuron)
+
+weight_init_mean        = 0.0 
+#mean of the wt initialized in the connections we dont want any pos/neg bias initially so we keep it neutral
+weight_init_stdev       = 1.0
+#how much varaition do we need in initiliazing wts
+weight_max_value        = 30
+#upper bound
+weight_min_value        = -30
+#lower_bound
+weight_mutate_power     = 0.5
+#std dev of the mutat
+weight_mutate_rate      = 0.8
+#prob that wt will be mutatuted kept high for more diversity
+weight_replace_rate     = 0.2
+#it will be completely replace keep like values 0.2/0.3 to avoid local maxima
+
+
+
+[DefaultSpeciesSet]
+
+#detemines how two diff genomes can be placed in the diff species like how much exactly they should differ 
+#based on genomic distance and 1 easy formula we know
+#if genomic distance value is less than this
+compatibility_threshold = 3.0
+#1.0 -> 2.0 more species each with fewer individuals can fragement too much population 
+#2.5-3.5 : balanced species formation  #preferrerdd for car game baalnced 
+#4.0+ : few species faster convergencecan kill diversity 
+
+
+
+[DefaultStagnation]
+
+#when to remove species which are no longer improving
+
+species_fitness_func = max
+#compute species level fitness from individual genome fitness of that species 
+#min :harsh strategy used in safety critical tasks
+#max : allow outliers to save the specie , used in sparse reward env and hard exploration envrionment(like ours randomly gen tracks) 
+#we use this so that even one genome works good we give them more time for exploration they may work like better
+#since other things will not even work properly like speices will always get wiped out due to stagnation so any new exploration of paths is tough
+#mean(smooth measure consider overall fitness of genomes in specie)
+#median : if fitness is noisy or skewed 
+#of the species genomes can be used as the overall species fitness
+#used to judge stagnation not reproduction
+
+max_stagnation       = 30
+#no of generation of species allowed to not improve before stagnation
+#low 5-10 fast search limited resources (speed inc but can prematurely remove good species)
+#medium 10-20 balanced approach
+#high 30-50 : sparse reward /difficult task used in RL
+
+species_elitism      = 2
+#no of top species protected from removal due to stagnation even if they are not performing well
+#0-> full pruning fast species turnover may lead to complete extinction if all species stagnate
+#1-2 -> limited speciation : prevents total extinction when diverstiy is low we use 2 (gives best results)
+#3+ : low population / high variance in innovation : keeps top performing species safe allows fallback if others stagnate stability in long run
+
+
+
+[DefaultReproduction]
+#who survives and who reproduce
+#how new genomes are created at each generation
+
+elitism            = 2
+#how many top individuals in each species are copied to the next generation(unchanged) not mutated ensures best solutions are not lost
+# 0 -> full evolutionary may loose good genonmes over time
+#1-2 : preserve atleast few good performers  #we use this 
+#3+ : want stability in high risk scenarios
+
+survival_threshold = 0.3
+#we use 0.3 since it helps general strategies to evolve and avoids overfitting
+#fraction of individual per species for crossover , rest are discarded (natural selection)
+#0.1-0.2 : strong selection pressure , speeds up evolution reduces diverstiy
+#0.3-0.5 : want more diversity in parent . when solution space is big , we dont want to loose weaker but useful genomes
+#0.6-0.9 : rarely needed use if fitnees is very noisy 
