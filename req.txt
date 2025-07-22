@@ -1,0 +1,8 @@
+pygame 
+numpy
+neat-python
+pandas
+scikit-learn
+tensorflow
+keras
+xgboost
