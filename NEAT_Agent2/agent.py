@@ -296,7 +296,7 @@ def run_simulation(genomes, config):
 if __name__ == "__main__":
     # Load Config
     config_path = "config.txt"
-    config = neat.config.Config(neat.DefaultGenome,
+    config = neat.Config(neat.DefaultGenome,
                                 neat.DefaultReproduction,
                                 neat.DefaultSpeciesSet,
                                 neat.DefaultStagnation,
