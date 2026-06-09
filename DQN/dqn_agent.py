@@ -96,7 +96,31 @@ class DQNAgent:
         plt.title("Training Loss")
         plt.xlabel("Epoch")
         plt.ylabel("Loss")
-        plt.show()
+    def train_step(self, batch_size=32):
+        if len(self.replay_buffer) < batch_size:
+            return
+            
+        batch = self.sample_from_replay_buffer(batch_size)
+        batch_states, batch_actions, _, _, _ = zip(*batch)
+        
+        batch_states = [self.normalize_state(state) for state in batch_states]
+        batch_states = torch.tensor(batch_states, dtype=torch.float32)
+        
+        batch_actions_int = []
+        for a in batch_actions:
+            if isinstance(a, Action):
+                batch_actions_int.append(a.value)
+            else:
+                batch_actions_int.append(int(a))
+        batch_actions = torch.tensor(batch_actions_int, dtype=torch.long)
+        
+        outputs = self.model(batch_states)
+        criterion = nn.CrossEntropyLoss()
+        loss = criterion(outputs, batch_actions)
+        
+        self.optimizer.zero_grad()
+        loss.backward()
+        self.optimizer.step()
 
     def get_action_from_model(self, state):
         normalized_state = self.normalize_state(state)

@@ -21,7 +21,7 @@ class Car:
 
     def __init__(self, startx, starty):
         # Load Car Sprite and Rotate
-        self.sprite = pygame.image.load('images/racing-car.png').convert_alpha() 
+        self.sprite = pygame.image.load('../images/racing-car.png').convert_alpha() 
         self.sprite = pygame.transform.scale(self.sprite, (CAR_SIZE_X, CAR_SIZE_Y))
         self.rotated_sprite = self.sprite 
 
@@ -295,8 +295,8 @@ def run_simulation(genomes, config):
 
 if __name__ == "__main__":
     # Load Config
-    config_path = "ReinforcementLearning_Car_Game/config.txt"
-    config = neat.config.Config(neat.DefaultGenome,
+    config_path = "config.txt"
+    config = neat.Config(neat.DefaultGenome,
                                 neat.DefaultReproduction,
                                 neat.DefaultSpeciesSet,
                                 neat.DefaultStagnation,
@@ -309,5 +309,5 @@ if __name__ == "__main__":
     population.add_reporter(stats)
 
     # Run the simulation
-    population.run(run_simulation, 25)
+    population.run(run_simulation, 50)
 

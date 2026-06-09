@@ -107,28 +107,21 @@ def calculate_reward(ray_distances, is_within_track, distance_covered, speed, an
         reward -= abs(speed) * 5.0  # Heavy penalty for backward motion
     
     # Center tracking reward
-    left_dist = ray_distances[0]
-    right_dist = ray_distances[-1]
-    center_diff = abs(left_dist - right_dist)
-    
-    # Exponential penalty for being off-center
-    center_penalty = (center_diff / 50.0) ** 2
-    reward -= center_penalty * 2.0
-    
-    # Bonus for perfect centering
-    if center_diff < 10:
-        reward += 2.0
+    # ray_distances[5] corresponds to left (-90 deg), ray_distances[1] corresponds to right (+90 deg)
+    if len(ray_distances) >= 6:
+        left_dist = ray_distances[5]
+        right_dist = ray_distances[1]
+        center_diff = abs(left_dist - right_dist)
+        
+        # Exponential penalty for being off-center
+        center_penalty = (center_diff / 50.0) ** 2
+        reward -= center_penalty * 2.0
+        
+        # Bonus for perfect centering
+        if center_diff < 10:
+            reward += 2.0
     
     # Progress reward
     reward += distance_covered * 0.1
-    
-    # Smooth driving bonus
-    if len(ray_distances) >= 3:
-        smoothness = sum(abs(ray_distances[i] - ray_distances[i-1]) for i in range(1, len(ray_distances)))
-        reward -= (smoothness / len(ray_distances)) * 0.01
-    
-    # Penalty for sharp angles
-    angle_penalty = abs(angle) * 0.5  # Increase penalty factor for larger angles
-    reward -= angle_penalty
     
     return reward
