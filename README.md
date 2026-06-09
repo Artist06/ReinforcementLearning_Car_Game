@@ -6,7 +6,7 @@ A Python-based car game that implements various reinforcement learning algorithm
 2. NeuroEvolution of Augmenting Topologies (NEAT)
 3. XGBoost with Keras
 
-![Game Screenshot](player_frame.png)
+C:\Users\0adit\Desktop\Acads\Coding\ReinforcementLearning_Car_Game\project_images\player_frame.png
 
 ## Features
 
@@ -92,7 +92,7 @@ python updated_main.py
 
 ### Main Menu
 
-![Main Menu](main_menu.png)
+![Main Menu](project_images/main_menu.png)
 
 ### Rules Page
 
