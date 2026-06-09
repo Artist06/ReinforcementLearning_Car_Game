@@ -1,44 +1,32 @@
 # Reinforcement Learning Car Game
 
-A Python-based car game that implements various reinforcement learning algorithms to enable autonomous driving. The project demonstrates three different machine learning techniques:
+A Python-based car game that implements various reinforcement learning algorithms to enable autonomous driving. The project demonstrates two different machine learning techniques:
 
 1. Deep Q-Learning (DQN)
 2. NeuroEvolution of Augmenting Topologies (NEAT)
-3. XGBoost with Keras
 
-![Game Screenshot](player_frame.png)
+![Game Screenshot](project_images/player_frame.png)
 
 ## Features
 
-- **Autonomous Driving**: Self-learning car using three different AI techniques
+- **Autonomous Driving**: Self-learning car using two different AI techniques
 - **Customizable Tracks**: Design and modify tracks to test learning adaptability
 - **Performance Metrics**: Monitor learning progress and performance
 
 ## Project Structure
 
-The project is organized into four main folders:
+The project is organized into two main folders:
 
-### 1. Main_Game
-
-- Basic game environment for testing and player interaction
-- Serves as the foundation for all AI implementations
-
-### 2. DQN
+### 1. DQN
 
 - Implementation of Dueling Deep Q-Network
 - Features actor-critic model architecture
 - Includes extensive replay buffer system
 
-### 3. NEAT_Agent2
+### 2. NEAT
 
 - NEAT algorithm implementation
 - View results through agent mode in main menu
-
-### 4. XGBoost_Agent3
-
-- XGBoost implementation with Keras
-- Includes training mode for data generation
-- Allows user gameplay for model training
 
 ## Installation
 
@@ -68,7 +56,7 @@ env_name\Scripts\activate
 3. Navigate to desired implementation:
 
 ```bash
-cd <folder_name>  # Main_Game, DQN, NEAT_Agent2, or XGBoost_Agent3
+cd <folder_name>  # DQN or NEAT
 ```
 
 4. Install dependencies:
@@ -80,7 +68,7 @@ pip install -r requirements.txt
 5. Run the game:
 
 ```bash
-python updated_main.py
+python main.py
 ```
 
 ## Controls
@@ -92,12 +80,12 @@ python updated_main.py
 
 ### Main Menu
 
-![Main Menu](main_menu.png)
+![Main Menu](project_images/main_menu.png)
 
 ### Rules Page
 
-![Rules Page](rules_page.png)
+![Rules Page](project_images/rules_page.png)
 
 ### Agent in Action
 
-![Agent Gameplay](agent_frame.png)
+![Agent Gameplay](project_images/agent_frame.png)
