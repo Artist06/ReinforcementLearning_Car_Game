@@ -96,8 +96,8 @@ python updated_main.py
 
 ### Rules Page
 
-![Rules Page](rules_page.png)
+![Rules Page](project_images/rules_page.png)
 
 ### Agent in Action
 
-![Agent Gameplay](agent_frame.png)
+![Agent Gameplay](project_images/agent_frame.png)
