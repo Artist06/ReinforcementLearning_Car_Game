@@ -5,7 +5,11 @@ A Python-based car game that implements various reinforcement learning algorithm
 1. Deep Q-Learning (DQN)
 2. NeuroEvolution of Augmenting Topologies (NEAT)
 
+<<<<<<< HEAD
 ![Game Screenshot](project_images/player_frame.png)
+=======
+C:\Users\0adit\Desktop\Acads\Coding\ReinforcementLearning_Car_Game\project_images\player_frame.png
+>>>>>>> 5ec77ba38cbd0adb51232283f2c4baef6c4de635
 
 ## Features
 
